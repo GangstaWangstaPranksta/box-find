@@ -20,6 +20,7 @@
 	"type": "module",
 	"dependencies": {
 		"carbon-components-svelte": "^0.76.0",
-		"carbon-icons-svelte": "^11.4.0"
+		"carbon-icons-svelte": "^11.4.0",
+		"node-json-db": "^2.2.0"
 	}
 }
