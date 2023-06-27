@@ -15,11 +15,11 @@
 	let id = data.box;
 	let contents = data.contents;
 	let savedContents = data.contents;
-	let modalOpen = false;
+	let cancelModalOpen = false;
 	let toasts = [];
-	const openModal = () => {
+	const openCancelModal = () => {
 		if (savedContents != contents) {
-			modalOpen = true;
+			cancelModalOpen = true;
 		} else {
 			goto('/');
 		}
@@ -58,17 +58,17 @@
 		bind:value={contents}
 	/>
 	<ButtonSet>
-		<Button kind="secondary" on:click={openModal}>Cancel</Button>
+		<Button kind="secondary" on:click={openCancelModal}>Cancel</Button>
 		<Button icon={Save} on:click={save}>Save</Button>
 	</ButtonSet>
 
 	<Modal
 		danger
-		bind:open={modalOpen}
+		bind:open={cancelModalOpen}
 		modalHeading="Exit without saving?"
 		primaryButtonText="Exit"
 		secondaryButtonText="Go Back"
-		on:click:button--secondary={() => (modalOpen = false)}
+		on:click:button--secondary={() => (cancelModalOpen = false)}
 		on:click:button--primary={() => {
 			goto('/');
 		}}
