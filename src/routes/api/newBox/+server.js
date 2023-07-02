@@ -5,7 +5,7 @@ import { JsonDB, Config } from 'node-json-db';
 export async function POST({ request }) {
     let db = new JsonDB(new Config("boxDatabase", false, false, '/'))
     const { id } = await request.json();
-    await db.push(`/${id}/contents`, "")
+    await db.push(`/${id}`, {contents:"", images:[]})
     db.save();
     return json( `${id} box created` );
 }
