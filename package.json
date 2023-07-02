@@ -21,7 +21,6 @@
 	"dependencies": {
 		"carbon-components-svelte": "^0.76.0",
 		"carbon-icons-svelte": "^11.4.0",
-		"lz-string": "^1.5.0",
 		"node-json-db": "^2.2.0"
 	}
 }
