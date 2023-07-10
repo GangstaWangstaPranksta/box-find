@@ -12,7 +12,8 @@ export async function POST({ request }) {
 
 	let orgWidth = (await sharp(imageBuffer).metadata()).width;
 	const compressedBuffer = await sharp(imageBuffer)
-		.resize({ width: Math.floor(orgWidth / 2) })
+		.withMetadata()
+		.resize({ width: Math.floor(orgWidth / 2)})
 		.jpeg({ quality: 75 })
 		.toBuffer();
 
