@@ -4,7 +4,7 @@ import sharp from 'sharp';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
-	let db = new JsonDB(new Config('boxDatabase', false, false, '/'));
+	let db = new JsonDB(new Config('boxImagesDB', false, false, '/'));
 	const { id, base64 } = await request.json();
 
 	const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
@@ -18,8 +18,8 @@ export async function POST({ request }) {
 
 	const compressedBase64 = `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
 
-	let oldImages = await db.getData(`/${id}/images`);
-	await db.push(`/${id}/images`, [...oldImages, compressedBase64]);
+	let oldImages = await db.getData(`/${id}`);
+	await db.push(`/${id}`, [...oldImages, compressedBase64]);
 	db.save();
 	return json('done');
 }

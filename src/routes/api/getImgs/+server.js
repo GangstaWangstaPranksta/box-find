@@ -3,8 +3,8 @@ import { JsonDB, Config } from 'node-json-db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
-    let db = new JsonDB(new Config("boxDatabase", false, false, '/'))
+    let imagesDB = new JsonDB(new Config("boxImagesDB", false, false, '/'))
     const { id } = await request.json();
-    let imgs = await db.getData(`/${id}/images`)
+    let imgs = await imagesDB.getData(`/${id}`)
     return json( imgs );
 }

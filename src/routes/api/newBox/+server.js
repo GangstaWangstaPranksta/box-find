@@ -3,9 +3,12 @@ import { JsonDB, Config } from 'node-json-db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
-    let db = new JsonDB(new Config("boxDatabase", false, false, '/'))
+    let contentDB = new JsonDB(new Config("boxContentsDB", false, false, '/'))
+    let imageDB = new JsonDB(new Config("boxImagesDB", false, false, '/'))
     const { id } = await request.json();
-    await db.push(`/${id}`, {contents:"", images:[]})
-    db.save();
+    await contentDB.push(`/${id}`, "")
+    await imageDB.push(`/${id}`, [])
+    contentDB.save();
+    imageDB.save();
     return json( `${id} box created` );
 }
