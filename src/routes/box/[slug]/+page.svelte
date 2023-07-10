@@ -148,7 +148,7 @@
 </script>
 
 <svelte:head>
-	<title>Box {data.box}</title>
+	<title>Box: {data.box} | Box Find</title>
 </svelte:head>
 
 <div class="wrapper">
