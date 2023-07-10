@@ -299,7 +299,7 @@
 			{/each}
 		</div>
 	{:else}
-		<h1>The box "{id}" does not yet exist. Would you like it to?</h1>
+		<h1 style="padding-bottom:1em">The box "{id}" does not yet exist. Would you like it to?</h1>
 		<Button icon={Home} kind="secondary" on:click={()=>{goto(`/`)}}>Go Home</Button>
 		<Button icon={Add} on:click={newBox}>Create Box</Button>
 	{/if}
