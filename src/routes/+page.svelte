@@ -68,7 +68,7 @@
 				on:click={() => {
 					showModal = true;
 				}}
-				iconDescription="Create a new Box"
+				iconDescription="New Box"
 				icon={Add}
 			/>
 		</span>
