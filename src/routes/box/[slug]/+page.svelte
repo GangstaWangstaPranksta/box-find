@@ -65,7 +65,7 @@
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
 
-		console.log([contentsSave, imgSave, imgDel]);
+		//console.log([contentsSave, imgSave, imgDel]);
 		if (contentsSave == 'saved' || imgSave == 'saved' || imgDel == 'saved') {
 			toasts = [...toasts, ''];
 		}
