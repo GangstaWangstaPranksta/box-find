@@ -150,6 +150,7 @@
 <svelte:head>
 	<title>Box {data.box}</title>
 </svelte:head>
+
 <div class="wrapper">
 	<Theme
 		theme="g80"
