@@ -1,5 +1,5 @@
 <script>
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import 'carbon-components-svelte/css/all.css';
 	import {
 		Theme,
@@ -14,6 +14,8 @@
 	import Edit from 'carbon-icons-svelte/lib/Edit.svelte';
 	import TrashCan from 'carbon-icons-svelte/lib/TrashCan.svelte';
 	import Camera from 'carbon-icons-svelte/lib/Camera.svelte';
+	import Home from 'carbon-icons-svelte/lib/Home.svelte';
+	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	/** @type {import('./$types').PageData} */
 	export let data;
 
@@ -145,6 +147,21 @@
 		photos.splice(index, 1);
 		photos = [...photos];
 	};
+	const newBox = async () => {
+		const res = await fetch('/api/newBox', {
+			method: 'POST',
+			body: JSON.stringify({ id }),
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+		if ((await res.json()) == `${id} box created`) {
+			//goto(`/box/${id}`);
+			invalidateAll()
+			initContents = ""
+			contents = ""
+		}
+	};
 </script>
 
 <svelte:head>
@@ -160,126 +177,132 @@
 			'active-primary': data.active
 		}}
 	/>
-	<div class="header">
-		<h1>Box: {data.box}</h1>
-		<div class="boxEditButtons">
-			<Button
-				kind="tertiary"
-				iconDescription="Edit"
-				icon={Edit}
-				on:click={() => {
-					editModalOpen = true;
-				}}
-			/>
-			<Button
-				kind="danger-tertiary"
-				iconDescription="Delete"
-				icon={TrashCan}
-				on:click={() => {
-					deleteModalOpen = true;
-				}}
-			/>
+	{#if data.boxExist}
+		<div class="header">
+			<h1>Box: {data.box}</h1>
+			<div class="boxEditButtons">
+				<Button
+					kind="tertiary"
+					iconDescription="Edit"
+					icon={Edit}
+					on:click={() => {
+						editModalOpen = true;
+					}}
+				/>
+				<Button
+					kind="danger-tertiary"
+					iconDescription="Delete"
+					icon={TrashCan}
+					on:click={() => {
+						deleteModalOpen = true;
+					}}
+				/>
+			</div>
 		</div>
-	</div>
-	<div class="editables">
-		<div class="textBox">
-			<TextArea
-				labelText="Box Contents"
-				placeholder="List box items seprated by a new line..."
-				bind:value={contents}
-			/>
-		</div>
+		<div class="editables">
+			<div class="textBox">
+				<TextArea
+					labelText="Box Contents"
+					placeholder="List box items seprated by a new line..."
+					bind:value={contents}
+				/>
+			</div>
 
-		<div class="images">
-			<Button icon={Camera} on:click={fileinput.click()}>Add Photo</Button>
-			<!-- hidden input -->
-			<input
-				type="file"
-				accept="image/*"
-				capture="environment"
-				on:change={(e) => onFileSelected(e)}
-				bind:this={fileinput}
-				style="display:none;"
-			/>
-			<p />
-			<span class="imgWrapper">
-				{#each photos as photo, index}
-					<span class="imgStack">
-						<span class="btnWrapper" style="padding-top:1em; padding-right:1em;">
-							<Button
-								kind="danger-tertiary"
-								iconDescription="Delete"
-								icon={TrashCan}
-								on:click={() => {
-									splicePhoto(index);
-								}}
-							/>
+			<div class="images">
+				<Button icon={Camera} on:click={fileinput.click()}>Add Photo</Button>
+				<!-- hidden input -->
+				<input
+					type="file"
+					accept="image/*"
+					capture="environment"
+					on:change={(e) => onFileSelected(e)}
+					bind:this={fileinput}
+					style="display:none;"
+				/>
+				<p />
+				<span class="imgWrapper">
+					{#each photos as photo, index}
+						<span class="imgStack">
+							<span class="btnWrapper" style="padding-top:1em; padding-right:1em;">
+								<Button
+									kind="danger-tertiary"
+									iconDescription="Delete"
+									icon={TrashCan}
+									on:click={() => {
+										splicePhoto(index);
+									}}
+								/>
+							</span>
+
+							<img src={photo} alt="img" />
 						</span>
-
-						<img src={photo} alt="img" />
-					</span>
-				{/each}
-			</span>
+					{/each}
+				</span>
+			</div>
 		</div>
-	</div>
 
-	<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
-	<Button icon={Save} on:click={save}>Save</Button>
+		<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
+		<Button icon={Save} on:click={save}>Save</Button>
 
-	<Modal
-		danger
-		bind:open={deleteModalOpen}
-		modalHeading="Delete this box?"
-		primaryButtonText="Delete"
-		secondaryButtonText="Cancel"
-		on:click:button--secondary={() => (deleteModalOpen = false)}
-		on:click:button--primary={() => {
-			delBox();
-		}}
-	>
-		<p>All data associated with this box will be deleted. This can not be reversed</p>
-	</Modal>
-	<Modal
-		bind:open={editModalOpen}
-		modalHeading="New Box Name/ID"
-		primaryButtonText="Change Box Name"
-		secondaryButtonText="Cancel"
-		on:click:button--secondary={() => (editModalOpen = false)}
-		on:click:button--primary={() => {
-			renameBox();
-		}}
-	>
-		<p>Any unsaved changed will be discarded.</p>
-		<TextInput
-			id="box-name"
-			labelText="Box ID"
-			placeholder="Enter box ID..."
-			bind:value={editBoxName}
-		/>
-	</Modal>
-	<Modal
-		danger
-		bind:open={cancelModalOpen}
-		modalHeading="Exit without saving?"
-		primaryButtonText="Exit"
-		secondaryButtonText="Go Back"
-		on:click:button--secondary={() => (cancelModalOpen = false)}
-		on:click:button--primary={() => {
-			goto('/');
-		}}
-	>
-		<p>You have unsaved data</p>
-	</Modal>
-	<div class="toasts">
-		{#each toasts as toast}
-			<ToastNotification
-				kind="success"
-				title="Success"
-				subtitle="Your changes have been saved."
-				caption={new Date().toLocaleString()}
+		<Modal
+			danger
+			bind:open={deleteModalOpen}
+			modalHeading="Delete this box?"
+			primaryButtonText="Delete"
+			secondaryButtonText="Cancel"
+			on:click:button--secondary={() => (deleteModalOpen = false)}
+			on:click:button--primary={() => {
+				delBox();
+			}}
+		>
+			<p>All data associated with this box will be deleted. This can not be reversed</p>
+		</Modal>
+		<Modal
+			bind:open={editModalOpen}
+			modalHeading="New Box Name/ID"
+			primaryButtonText="Change Box Name"
+			secondaryButtonText="Cancel"
+			on:click:button--secondary={() => (editModalOpen = false)}
+			on:click:button--primary={() => {
+				renameBox();
+			}}
+		>
+			<p>Any unsaved changed will be discarded.</p>
+			<TextInput
+				id="box-name"
+				labelText="Box ID"
+				placeholder="Enter box ID..."
+				bind:value={editBoxName}
 			/>
-		{/each}
-	</div>
+		</Modal>
+		<Modal
+			danger
+			bind:open={cancelModalOpen}
+			modalHeading="Exit without saving?"
+			primaryButtonText="Exit"
+			secondaryButtonText="Go Back"
+			on:click:button--secondary={() => (cancelModalOpen = false)}
+			on:click:button--primary={() => {
+				goto('/');
+			}}
+		>
+			<p>You have unsaved data</p>
+		</Modal>
+		<div class="toasts">
+			{#each toasts as toast}
+				<ToastNotification
+					kind="success"
+					title="Success"
+					subtitle="Your changes have been saved."
+					caption={new Date().toLocaleString()}
+				/>
+			{/each}
+		</div>
+	{:else}
+		<h1>The box "{id}" does not yet exist. Would you like it to?</h1>
+		<Button icon={Home} kind="secondary" on:click={()=>{goto(`/`)}}>Go Home</Button>
+		<Button icon={Add} on:click={newBox}>Create Box</Button>
+	{/if}
 </div>
 
 <style>
