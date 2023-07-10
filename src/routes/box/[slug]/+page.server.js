@@ -1,7 +1,8 @@
 import { JsonDB, Config } from 'node-json-db';
 /** @type {import('./$types').PageLoad} */
 export async function load({ params }) {
-	let db = new JsonDB(new Config("boxDatabase", false, false, '/'))
+	let contentDB = new JsonDB(new Config("boxContentsDB", false, false, '/'))
+    let imageDB = new JsonDB(new Config("boxImagesDB", false, false, '/'))
 	let currentTime = new Date().getHours();
 	let primary = currentTime>7&&currentTime<21 ? "#19a619" : "#cf7f23"
 	let hover = currentTime>7&&currentTime<21 ? "#2cb82c" : "#d18a38"
@@ -11,6 +12,7 @@ export async function load({ params }) {
 		primary: primary,
 		hover: hover,
 		active: active,
-		contents: await db.getData(`/${params.slug}/contents`)
+		contents: await contentDB.getData(`/${params.slug}`),
+		images: await imageDB.getData(`/${params.slug}`)
 	};
 }
