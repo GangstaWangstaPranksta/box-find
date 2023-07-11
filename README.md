@@ -1,8 +1,6 @@
 # Box Find
-  
 
-A SvelteKit-based box storage organizer system using the IBM Carbon Components & Icon Library, sharp, js-search, and node-json-db. 
-
+A SvelteKit-based box storage organizer system using the IBM Carbon Components & Icon Library, sharp, js-search, node-json-db, and @egjs/svelte-grid.
 
 ## Deployment
 Locally hosted on a node server in a Docker Conatiner, soon™
@@ -29,7 +27,7 @@ Locally hosted on a node server in a Docker Conatiner, soon™
 - rawContents
 	- get raw JSON from contents DB
 	-  json body:
-	    - `{  }`
+	  - `{  }`
 - rawImages
 	- get raw JSON from images DB
 		-  json body:
