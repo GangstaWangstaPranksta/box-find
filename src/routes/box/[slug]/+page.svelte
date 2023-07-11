@@ -16,8 +16,14 @@
 	import Camera from 'carbon-icons-svelte/lib/Camera.svelte';
 	import Home from 'carbon-icons-svelte/lib/Home.svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
+	import { MasonryGrid } from '@egjs/svelte-grid';
 	/** @type {import('./$types').PageData} */
 	export let data;
+
+	const align = 'start';
+	const column = 0;
+	const gap = 16;
+	const defaultDirection = 'end';
 
 	let id = data.box;
 	let contents = data.contents;
@@ -157,9 +163,9 @@
 		});
 		if ((await res.json()) == `${id} box created`) {
 			//goto(`/box/${id}`);
-			invalidateAll()
-			initContents = ""
-			contents = ""
+			invalidateAll();
+			initContents = '';
+			contents = '';
 		}
 	};
 </script>
@@ -209,7 +215,7 @@
 			</div>
 
 			<div class="images">
-				<Button icon={Camera} on:click={fileinput.click()}>Add Photo</Button>
+				<Button icon={Camera} on:click={fileinput.click()} style="margin-bottom: 1em">Add Photo</Button>
 				<!-- hidden input -->
 				<input
 					type="file"
@@ -221,22 +227,24 @@
 				/>
 				<p />
 				<span class="imgWrapper">
-					{#each photos as photo, index}
-						<span class="imgStack">
-							<span class="btnWrapper" style="padding-top:1em; padding-right:1em;">
-								<Button
-									kind="danger-tertiary"
-									iconDescription="Delete"
-									icon={TrashCan}
-									on:click={() => {
-										splicePhoto(index);
-									}}
-								/>
-							</span>
+					<MasonryGrid {defaultDirection} {gap} {align} {column}>
+						{#each photos as photo, index}
+							<span class="imgStack">
+								<span class="btnWrapper" style="padding-top:1em; padding-right:1em;">
+									<Button
+										kind="danger-tertiary"
+										iconDescription="Delete"
+										icon={TrashCan}
+										on:click={() => {
+											splicePhoto(index);
+										}}
+									/>
+								</span>
 
-							<img src={photo} alt="img" />
-						</span>
-					{/each}
+								<img src={photo} alt="img" />
+							</span>
+						{/each}
+					</MasonryGrid>
 				</span>
 			</div>
 		</div>
@@ -300,7 +308,13 @@
 		</div>
 	{:else}
 		<h1 style="padding-bottom:1em">The box "{id}" does not yet exist. Would you like it to?</h1>
-		<Button icon={Home} kind="secondary" on:click={()=>{goto(`/`)}}>Go Home</Button>
+		<Button
+			icon={Home}
+			kind="secondary"
+			on:click={() => {
+				goto(`/`);
+			}}>Go Home</Button
+		>
 		<Button icon={Add} on:click={newBox}>Create Box</Button>
 	{/if}
 </div>
@@ -336,13 +350,8 @@
 		margin-left: 1em;
 	}
 	img {
-		min-width: 30em;
-		max-width: 18vw;
-		padding: 0.5em 0.5em 0 0;
-	}
-	.imgWrapper {
-		display: inline-flex;
-		flex-wrap: wrap;
+		/* min-width: 24em; */
+		/* max- */width: 40em;
 	}
 	.imgStack {
 		display: grid;
@@ -363,7 +372,7 @@
 			margin-left: 0;
 		}
 		img {
-			max-width: 90vw;
+			max-width: 92vw;
 		}
 	}
 </style>
