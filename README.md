@@ -1,38 +1,49 @@
-# create-svelte
+# Box Find
+  
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+A SvelteKit-based box storage organizer system using the IBM Carbon Components & Icon Library, sharp, js-search, and node-json-db. 
 
-## Creating a project
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Deployment
+Locally hosted on a node server in a Docker Conatiner, soon™
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+## API Routes
+`/api/`
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+- deleteBox
+	- delete the specified box from DB
+	- json body:
+		- `{ id }`
+- delImage
+	- delete the specified image from the specified box ID
+	- json body:
+		- `{ id, base64 }`
+- getImgs
+	- get all the images associated with the specified box ID
+	-  json body:
+		- `{ id }`
+- newBox
+	- create new objects in the DB with specified box ID
+	-  json body:
+		- `{ id }`
+- rawContents
+	- get raw JSON from contents DB
+	-  json body:
+	  - `{  }`
+- rawImages
+	- get raw JSON from images DB
+		-  json body:
+		- `{  }`
+- renameBox
+	- rename box from `id` to `editBoxName` while keeping assosiated data
+	-  json body:
+		- `{ id, editBoxName}`
+-  saveContent
+	- save `contents` as the contents of specified box ID
+	-  json body:
+		- `{ id, contents }`
+- saveImage
+	- add `base64` to array of images for specified box ID
+	-  json body:
+		- `{ id, base64 }`
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
