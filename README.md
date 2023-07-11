@@ -29,7 +29,7 @@ Locally hosted on a node server in a Docker Conatiner, soon™
 - rawContents
 	- get raw JSON from contents DB
 	-  json body:
-	  - `{  }`
+	    - `{  }`
 - rawImages
 	- get raw JSON from images DB
 		-  json body:
