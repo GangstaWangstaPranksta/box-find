@@ -248,9 +248,11 @@
 				</span>
 			</div>
 		</div>
-
-		<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
-		<Button icon={Save} on:click={save}>Save</Button>
+		
+		<div class="buttons" style="position: sticky; bottom: 1.5em">
+			<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
+			<Button icon={Save} on:click={save} disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0)}>Save</Button>
+		</div>
 
 		<Modal
 			danger
