@@ -4,6 +4,13 @@
 	import { Theme, Button, Modal, TextInput, Search, ClickableTile } from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
+	import { MasonryGrid } from '@egjs/svelte-grid';
+
+	const align = 'start';
+	const column = 0;
+	const gap = 16;
+	const defaultDirection = 'end';
+	
 	/** @type {import('./$types').PageData} */
 	export let data;
 	let showModal = false;
@@ -79,9 +86,16 @@
 			<ClickableTile href="/box/{item.id}" style="margin-bottom: 1em;">
 				<h2>{item.id}</h2>
 				{item.content.replace(/\n/g, ', ')}
-				{#each data.photos[item.id] as photo}
-					<img src={photo} alt="o" style="width: 10vw" />
-				{/each}
+				{#if data.photos[item.id].length > 0}
+					<div class="content" style="border-bottom:1px solid; margin:.75em 0 .75em 0;" />
+
+					<h4>Pictures</h4>
+					<MasonryGrid {defaultDirection} {gap} {align} {column}>
+						{#each data.photos[item.id] as photo}
+						<img src={photo} alt="o" style="min-width: 200px; width: 10vw" />
+						{/each}
+					</MasonryGrid>
+				{/if}
 			</ClickableTile>
 		{/each}
 	{:else}
