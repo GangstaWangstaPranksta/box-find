@@ -56,7 +56,7 @@
 		}
 	};
 	const save = async () => {
-		let contentsSave = '';
+		let contentsSave;
 		let imgSave = '';
 		let imgDel = '';
 		if (initContents != contents) {
@@ -68,13 +68,14 @@
 				}
 			});
 			contentsSave = await res.json();
-			initContents = contents;
+			if(contentsSave.acknowledged && (contentsSave.modifiedCount==1))
+				initContents = contents;
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
 
 		//console.log([contentsSave, imgSave, imgDel]);
-		if (contentsSave == 'saved' || imgSave == 'saved' || imgDel == 'saved') {
+		if ((contentsSave.acknowledged && (contentsSave.modifiedCount==1)) || imgSave == 'saved' || imgDel == 'saved') {
 			toasts = [...toasts, ''];
 		}
 	};
@@ -86,7 +87,7 @@
 				'content-type': 'application/json'
 			}
 		});
-		return res.json().ackowledged && (res.json().modifiedCount==1);
+		return res.json().acknowledged && (res.json().modifiedCount==1);
 	};
 	const saveImgs = async () => {
 		if (newPhotos.length > 0) {
