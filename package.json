@@ -24,7 +24,6 @@
 		"carbon-components-svelte": "^0.76.0",
 		"carbon-icons-svelte": "^11.4.0",
 		"js-search": "^2.0.1",
-		"node-json-db": "^2.2.0",
 		"sharp": "^0.32.1"
 	}
 }
