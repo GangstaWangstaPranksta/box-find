@@ -1,8 +1,6 @@
-//import { JsonDB, Config } from 'node-json-db';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv'
 dotenv.config()
-console.log(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@${process.env.MONGO_URL}/?retryWrites=true&w=majority`)
 const client =  new MongoClient(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@${process.env.MONGO_URL}/?retryWrites=true&w=majority`, {
 	serverApi: {
 	  version: ServerApiVersion.v1,
