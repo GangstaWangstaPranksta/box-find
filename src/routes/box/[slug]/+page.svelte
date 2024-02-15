@@ -1,6 +1,6 @@
 <script>
 	import { goto, invalidateAll } from '$app/navigation';
-	import 'carbon-components-svelte/css/all.css';
+	import 'carbon-components-svelte/css/g80.css';
 	import {
 		Theme,
 		TextArea,
@@ -56,7 +56,7 @@
 		}
 	};
 	const save = async () => {
-		let contentsSave = '';
+		let contentsSave = {acknowledged: false, modifiedCount: 0};
 		let imgSave = '';
 		let imgDel = '';
 		if (initContents != contents) {
@@ -68,13 +68,12 @@
 				}
 			});
 			contentsSave = await res.json();
-			initContents = contents;
+			if(contentsSave.acknowledged && (contentsSave.modifiedCount==1))
+				initContents = contents;
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
-
-		//console.log([contentsSave, imgSave, imgDel]);
-		if (contentsSave == 'saved' || imgSave == 'saved' || imgDel == 'saved') {
+		if ((contentsSave.acknowledged && (contentsSave.modifiedCount==1)) || imgSave == "saved" || imgDel == "saved" ) {
 			toasts = [...toasts, ''];
 		}
 	};
@@ -86,18 +85,15 @@
 				'content-type': 'application/json'
 			}
 		});
-		return res.json();
+		return res.json().acknowledged && (res.json().modifiedCount==1);
 	};
 	const saveImgs = async () => {
-		if (newPhotos.length > 0) {
-			//loadingStatus = "active";
-			await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
-			//console.log(values)
-			newPhotos = [];
-			//loadingStatus = "finished";
-			return 'saved';
-		}
-		return '';
+		//loadingStatus = "active";
+		await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
+		//console.log(values)
+		newPhotos = [];
+		//loadingStatus = "finished";
+		return 'saved';
 	};
 	const unUploadImg = async (base64) => {
 		const res = await fetch('/api/delImage', {
