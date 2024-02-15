@@ -1,6 +1,6 @@
 <script>
 	import { goto, invalidateAll } from '$app/navigation';
-	import 'carbon-components-svelte/css/all.css';
+	import 'carbon-components-svelte/css/g80.css';
 	import {
 		Theme,
 		TextArea,

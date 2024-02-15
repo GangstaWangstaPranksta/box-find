@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import 'carbon-components-svelte/css/all.css';
+	import 'carbon-components-svelte/css/g80.css';
 	import { Theme, Button, Modal, TextInput, Search, ClickableTile } from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
