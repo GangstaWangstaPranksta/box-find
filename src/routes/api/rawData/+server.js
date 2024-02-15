@@ -10,16 +10,16 @@ const client =  new MongoClient(`mongodb+srv://${process.env.MONGO_USER}:${proce
 	},
   });
 
-/** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
-	const { id, contents } = await request.json();
+/** @type {import('./$types').PageLoad} */
+export async function GET() {
 	let res;
 	try {
 	  // Connect the client to the server	(optional starting in v4.7)
 	  await client.connect();
 	  const collection = await client.db("test-box-db").collection("boxes");
 
-	  res = await collection.updateOne({ _id: id }, { $set: { contents }, $set: { lastModified: Date.now() } });
+	  res = await collection.find({  })
+	  res = await res.toArray()
   
 	} finally {
 	  // Ensures that the client will close when you finish/error
