@@ -86,7 +86,7 @@
 				'content-type': 'application/json'
 			}
 		});
-		return res.json();
+		return res.json().ackowledged && (res.json().modifiedCount==1);
 	};
 	const saveImgs = async () => {
 		if (newPhotos.length > 0) {
