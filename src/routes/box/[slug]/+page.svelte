@@ -58,9 +58,10 @@
 		}
 	};
 	const save = async () => {
-		let contentsSave = {acknowledged: false, modifiedCount: 0};
+		let contentsSave = { acknowledged: false, modifiedCount: 0 };
 		let imgSave = '';
 		let imgDel = '';
+		let error;
 		saving = true;
 		if (initContents != contents) {
 			const res = await fetch('/api/saveContent', {
@@ -70,14 +71,22 @@
 					'content-type': 'application/json'
 				}
 			});
+			if (!res.ok) {
+				toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.` }];
+			}
 			contentsSave = await res.json();
-			if(contentsSave.acknowledged && (contentsSave.modifiedCount==1))
-				initContents = contents;
+			if (contentsSave.acknowledged && contentsSave.modifiedCount == 1) initContents = contents;
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
-		if ((contentsSave.acknowledged && (contentsSave.modifiedCount==1)) || imgSave == "saved" || imgDel == "saved" ) {
-			toasts = [...toasts, ''];
+		if (
+			(contentsSave.acknowledged && contentsSave.modifiedCount == 1) ||
+			imgSave == 'saved' ||
+			imgDel == 'saved'
+		) {
+			toasts = [...toasts, { kind: 'success', title: 'Success!', subtitle: 'Changes have been saved.' }];
+		} else {
+			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${error}.`}];
 		}
 		saving = false;
 	};
@@ -89,15 +98,21 @@
 				'content-type': 'application/json'
 			}
 		});
-		return res.json().acknowledged && (res.json().modifiedCount==1);
+		let data = await res.json();
+		if (res.ok && data.acknowledged && data.modifiedCount == 1) return true;
+		else return res.status;
 	};
 	const saveImgs = async () => {
 		//loadingStatus = "active";
-		await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
-		//console.log(values)
+		let values = await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
 		newPhotos = [];
 		//loadingStatus = "finished";
-		return 'saved';
+		if (values.every((value) => value === true)) {
+			return 'saved';
+		} else {
+			return values.find((value) => value !== true);
+		}
+		//return 'saved';
 	};
 	const unUploadImg = async (base64) => {
 		const res = await fetch('/api/delImage', {
@@ -107,15 +122,20 @@
 				'content-type': 'application/json'
 			}
 		});
-		return res.json();
+		let data = await res.json()
+		if((res.ok) && data.acknowledged && data.matchedCount == 1) return true;
+		else return res.status;
 	};
 	const saveDelImg = async () => {
 		if (delPhotos.length > 0) {
-			await Promise.all(delPhotos.map((photo) => unUploadImg(photo)));
+			let values = await Promise.all(delPhotos.map((photo) => unUploadImg(photo)));
 			delPhotos = [];
-			return 'saved';
+			if (values.every((value) => value === true)) {
+				return 'saved';
+			} else {
+				return values.find((value) => value !== true);
+			}
 		}
-		return '';
 	};
 	const delBox = async () => {
 		const res = await fetch('/api/deleteBox', {
@@ -125,8 +145,11 @@
 				'content-type': 'application/json'
 			}
 		});
-		if ((await res.json()) == `${id} box deleted`) {
-			goto(`/`);
+		if (await res.ok && await res.json() == `${id} box deleted`) {
+			toasts = [...toasts, { kind: 'success', title: 'Deleted', subtitle: `${id} box deleted.` }];
+			goto(`/`)
+		} else {
+			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.`}];
 		}
 	};
 	const renameBox = async () => {
@@ -137,10 +160,12 @@
 				'content-type': 'application/json'
 			}
 		});
-		if ((await res.json()) == `${id} box renamed to ${editBoxName}`) {
+		if ((await res.json()) == `${id} box renamed to ${editBoxName}` && res.ok) {
 			goto(`/box/${editBoxName}`);
 			id = editBoxName;
 			editModalOpen = false;
+		}else{
+			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.`}];
 		}
 	};
 	const splicePhoto = (index) => {
@@ -215,7 +240,9 @@
 			</div>
 
 			<div class="images">
-				<Button icon={Camera} on:click={fileinput.click()} style="margin-bottom: 1em">Add Photo</Button>
+				<Button icon={Camera} on:click={fileinput.click()} style="margin-bottom: 1em"
+					>Add Photo</Button
+				>
 				<!-- hidden input -->
 				<input
 					type="file"
@@ -248,10 +275,15 @@
 				</span>
 			</div>
 		</div>
-		
+
 		<div class="buttons" style="position: sticky; bottom: 1.5em">
 			<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
-			<Button icon={Save} on:click={save} disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) || saving}>
+			<Button
+				icon={Save}
+				on:click={save}
+				disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) ||
+					saving}
+			>
 				{#if saving}
 					<InlineLoading description="Saving..." status="active" />
 				{:else}
@@ -307,9 +339,9 @@
 		<div class="toasts">
 			{#each toasts as toast}
 				<ToastNotification
-					kind="success"
-					title="Success"
-					subtitle="Your changes have been saved."
+					kind = {toast.kind}
+					title = {toast.title}
+					subtitle = {toast.subtitle}
 					caption={new Date().toLocaleString()}
 				/>
 			{/each}
@@ -359,7 +391,8 @@
 	}
 	img {
 		/* min-width: 24em; */
-		/* max- */width: 40em;
+		/* max- */
+		width: 40em;
 	}
 	.imgStack {
 		display: grid;
