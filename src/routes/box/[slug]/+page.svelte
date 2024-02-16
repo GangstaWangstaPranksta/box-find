@@ -1,5 +1,7 @@
 <script>
 	import { goto, invalidateAll } from '$app/navigation';
+	import { fade } from 'svelte/transition';
+	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
 	import {
 		Theme,
@@ -72,7 +74,7 @@
 				}
 			});
 			if (!res.ok) {
-				toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.` }];
+				addToast('error', 'Oops, something went wrong.',`An error occured, status: ${res.status}.`);
 			}
 			contentsSave = await res.json();
 			if (contentsSave.acknowledged && contentsSave.modifiedCount == 1) initContents = contents;
@@ -84,9 +86,9 @@
 			imgSave == 'saved' ||
 			imgDel == 'saved'
 		) {
-			toasts = [...toasts, { kind: 'success', title: 'Success!', subtitle: 'Changes have been saved.' }];
+			addToast('success', 'Success!', 'Changes have been saved.');
 		} else {
-			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${error}.`}];
+			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${error}.`);
 		}
 		saving = false;
 	};
@@ -146,10 +148,10 @@
 			}
 		});
 		if (await res.ok && await res.json() == `${id} box deleted`) {
-			toasts = [...toasts, { kind: 'success', title: 'Deleted', subtitle: `${id} box deleted.` }];
+			addToast('success', 'Deleted', `${id} box deleted.`);
 			goto(`/`)
 		} else {
-			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.`}];
+			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
 	};
 	const renameBox = async () => {
@@ -165,7 +167,7 @@
 			id = editBoxName;
 			editModalOpen = false;
 		}else{
-			toasts = [...toasts, { kind: 'error', title: 'Oops, something went wrong.', subtitle: `An error occured, status: ${res.status}.`}];
+			addToast('error', 'Oops, something went wrong.',  `An error occured, status: ${res.status}.`);
 		}
 	};
 	const splicePhoto = (index) => {
@@ -193,6 +195,17 @@
 			contents = '';
 		}
 	};
+
+	const addToast = (kind, title, subtitle) => {
+		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null}];
+		toasts = toasts.map(toast => {
+		  toast.timeoutId = setTimeout(() => {
+			toasts = toasts.filter(t => t !== toast);
+		  }, 10000); // 10 seconds
+		  return toast;
+		});
+	};
+
 </script>
 
 <svelte:head>
@@ -338,12 +351,18 @@
 		</Modal>
 		<div class="toasts">
 			{#each toasts as toast}
+				<div class="toast"
+					in:fade={{ duration: 500, easing:quintIn }}
+					out:fade={{ duration: 500, easing:quintOut }}
+				>
 				<ToastNotification
-					kind = {toast.kind}
-					title = {toast.title}
-					subtitle = {toast.subtitle}
-					caption={new Date().toLocaleString()}
+				kind = {toast.kind}
+				title = {toast.title}
+				subtitle = {toast.subtitle}
+				caption={toast.date.toLocaleString()}
+				lowContrast
 				/>
+				</div>
 			{/each}
 		</div>
 	{:else}
