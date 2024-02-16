@@ -7,7 +7,8 @@
 		Button,
 		Modal,
 		ToastNotification,
-		TextInput
+		TextInput,
+		InlineLoading
 	} from 'carbon-components-svelte';
 	import Save from 'carbon-icons-svelte/lib/Save.svelte';
 	import Exit from 'carbon-icons-svelte/lib/Exit.svelte';
@@ -37,6 +38,7 @@
 	let delPhotos = [];
 	let newPhotos = [];
 	let fileinput;
+	let saving = false;
 
 	const onFileSelected = (e) => {
 		let image = e.target.files[0];
@@ -59,6 +61,7 @@
 		let contentsSave = {acknowledged: false, modifiedCount: 0};
 		let imgSave = '';
 		let imgDel = '';
+		saving = true;
 		if (initContents != contents) {
 			const res = await fetch('/api/saveContent', {
 				method: 'POST',
@@ -76,6 +79,7 @@
 		if ((contentsSave.acknowledged && (contentsSave.modifiedCount==1)) || imgSave == "saved" || imgDel == "saved" ) {
 			toasts = [...toasts, ''];
 		}
+		saving = false;
 	};
 	const uploadImg = async (base64) => {
 		const res = await fetch('/api/saveImage', {
@@ -247,7 +251,13 @@
 		
 		<div class="buttons" style="position: sticky; bottom: 1.5em">
 			<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
-			<Button icon={Save} on:click={save} disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0)}>Save</Button>
+			<Button icon={Save} on:click={save} disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) || saving}>
+				{#if saving}
+					<InlineLoading description="Saving..." status="active" />
+				{:else}
+					Save
+				{/if}
+			</Button>
 		</div>
 
 		<Modal
