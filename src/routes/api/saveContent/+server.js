@@ -19,7 +19,7 @@ export async function POST({ request }) {
 	  await client.connect();
 	  const collection = await client.db("test-box-db").collection("boxes");
 
-	  res = await collection.updateOne({ _id: id }, { $set: { contents }, $set: { lastModified: Date.now() } });
+	  res = await collection.updateOne({ _id: id }, { $set: { contents: contents, lastModified: Date.now() } });
   
 	} finally {
 	  // Ensures that the client will close when you finish/error
