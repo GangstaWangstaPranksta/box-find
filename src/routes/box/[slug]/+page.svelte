@@ -352,7 +352,7 @@
 		<div class="toasts">
 			{#each toasts as toast}
 				<div class="toast"
-					in:fade={{ duration: 500, easing:quintIn }}
+					in:fade={{ duration: 250, easing:quintIn }}
 					out:fade={{ duration: 500, easing:quintOut }}
 				>
 				<ToastNotification
