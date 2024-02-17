@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import 'carbon-components-svelte/css/g80.css';
-	import { Theme, Button, Modal, TextInput, Search, ClickableTile } from 'carbon-components-svelte';
+	import { Theme, Button, Modal, TextInput, Search, ClickableTile, Truncate } from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
 	import { MasonryGrid } from '@egjs/svelte-grid';
@@ -85,7 +85,9 @@
 		{#each result as item}
 			<ClickableTile href="/box/{item.id}" style="margin-bottom: 1em;">
 				<h2>{item.id}</h2>
-				{item.content.replace(/\n/g, ', ')}
+				<Truncate>
+					{item.content.replace(/\n/g, ', ')}
+				</Truncate>
 				{#if data.photos[item.id].length > 0}
 					<div class="content" style="border-bottom:1px solid; margin:.75em 0 .75em 0;" />
 
