@@ -27,10 +27,9 @@ export async function POST({ request }) {
 	const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
 	const imageBuffer = Buffer.from(base64Data, 'base64');
 
-	let orgWidth = (await sharp(imageBuffer).metadata()).width;
 	const compressedBuffer = await sharp(imageBuffer)
 		.withMetadata()
-		.resize({ width: Math.floor(orgWidth / 2)})
+		.resize(6500, 6500, { fit: 'inside' })
 		.jpeg({ quality: 75 })
 		.toBuffer();
 
