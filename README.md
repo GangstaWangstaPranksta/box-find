@@ -31,7 +31,7 @@ Locally hosted on a node server in Docker alongside mongoDB (see docker-compose.
 - rawImages
 	- get raw JSON from images DB
 		-  json body:
-		- `{  }`
+		 - `{  }`
 - renameBox
 	- rename box from `id` to `editBoxName` while keeping assosiated data
 	-  json body:
