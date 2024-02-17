@@ -24,14 +24,10 @@ Locally hosted on a node server in Docker alongside mongoDB (see docker-compose.
 	- create new objects in the DB with specified box ID
 	-  json body:
 		- `{ id }`
-- rawContents
-	- get raw JSON from contents DB
+- rawData
+	- get raw JSON from entire DB
 	-  json body:
 		- `{  }`
-- rawImages
-	- get raw JSON from images DB
-		-  json body:
-		 - `{  }`
 - renameBox
 	- rename box from `id` to `editBoxName` while keeping assosiated data
 	-  json body:
