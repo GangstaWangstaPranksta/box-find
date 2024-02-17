@@ -259,7 +259,7 @@
 				<!-- hidden input -->
 				<input
 					type="file"
-					accept="image/*"
+					accept=".png, .jpeg, .webp, .gif, .tiff, .jpg"
 					capture="environment"
 					on:change={(e) => onFileSelected(e)}
 					bind:this={fileinput}
