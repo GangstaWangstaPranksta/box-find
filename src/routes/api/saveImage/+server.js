@@ -3,7 +3,15 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv'
 import sharp from 'sharp';
 dotenv.config()
-const client =  new MongoClient(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@${process.env.MONGO_URL}/?retryWrites=true&w=majority`, {
+
+let uri;
+if(process.env.NODE_ENV !== 'production') {
+	uri = `mongodb+srv://${process.env.MONGO_URI}`
+} else {
+	uri = `mongodb://${process.env.MONGO_URI}`
+}
+
+const client =  new MongoClient(uri, {
 	serverApi: {
 	  version: ServerApiVersion.v1,
 	  strict: true,
