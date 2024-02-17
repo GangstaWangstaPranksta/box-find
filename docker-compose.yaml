@@ -1,7 +1,7 @@
 version: "3"
 services:
   app:
-    image: sveltekit:node
+    image: box-find:0.1
     ports:
       - "3000:3000"
     environment:
