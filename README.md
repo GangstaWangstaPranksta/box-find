@@ -27,7 +27,7 @@ Locally hosted on a node server in Docker alongside mongoDB (see docker-compose.
 - rawContents
 	- get raw JSON from contents DB
 	-  json body:
-		- `{ id }`
+		- `{  }`
 - rawImages
 	- get raw JSON from images DB
 		-  json body:
