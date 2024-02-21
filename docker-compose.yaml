@@ -9,7 +9,7 @@ services:
       - MONGO_PW=password8374
       - MONGO_URL=db
       - MONGO_URI=user:password8374@mongodb
-      - BODY_SIZE_LIMIT=50000000
+      - BODY_SIZE_LIMIT=50000000 # 50mb
     depends_on:
       - mongodb
   mongodb:
