@@ -49,7 +49,7 @@
 			}
 		});
 		if ((await res.json()) == `${id} box created`) {
-			goto(`/box/${id}`);
+			goto(`/box/${encodeURIComponent(id)}`);
 		}
 	};
 </script>
@@ -83,7 +83,7 @@
 
 	{#if result.length > 0}
 		{#each result as item}
-			<ClickableTile href="/box/{item.id}" style="margin-bottom: 1em;">
+			<ClickableTile href="/box/{encodeURIComponent(item.id)}" style="margin-bottom: 1em;">
 				<h2>{item.id}</h2>
 				<Truncate>
 					{item.content.replace(/\n/g, ', ')}

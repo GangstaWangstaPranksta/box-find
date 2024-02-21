@@ -24,7 +24,7 @@ export async function load({ params }) {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = await client.db("test-box-db").collection("boxes");
-		let boxDataCursor = await collection.find({ _id: params.slug }, { sort: { lastModified: -1 }, projection: { }})
+		let boxDataCursor = await collection.find({ _id: decodeURIComponent(params.slug) }, { sort: { lastModified: -1 }, projection: { }})
   
 		contents = await boxDataCursor.toArray()
 
@@ -42,7 +42,7 @@ export async function load({ params }) {
 	let active = currentTime > 7 && currentTime < 21 ? '#098f09' : '#c96e06';
 
 	return {
-		box: params.slug,
+		box: decodeURIComponent(params.slug),
 		primary: primary,
 		hover: hover,
 		active: active,
