@@ -20,6 +20,7 @@
 	import Home from 'carbon-icons-svelte/lib/Home.svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import { MasonryGrid } from '@egjs/svelte-grid';
+	import { browser } from '$app/environment';
 	/** @type {import('./$types').PageData} */
 	export let data;
 
@@ -56,7 +57,7 @@
 		if (initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) {
 			cancelModalOpen = true;
 		} else {
-			goto('/');
+			if (browser) window.history.back();
 		}
 	};
 	const save = async () => {
