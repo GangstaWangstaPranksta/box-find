@@ -21,6 +21,9 @@ const client =  new MongoClient(uri, {
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ params }) {
+	//check if the page is a number, if not redirect to home
+	const regex = /^[0-9]+$/;
+	if (!regex.test(params.slug)) redirect(307, `/`);
 	let page = parseInt(params.slug);
 	let lastPage;
 	let images, contents;
