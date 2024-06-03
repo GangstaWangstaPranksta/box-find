@@ -20,7 +20,8 @@ const client =  new MongoClient(uri, {
 
 
 /** @type {import('./$types').PageLoad} */
-export async function load({}) {
+export async function load({ params }) {
+	let page = parseInt(params.slug);
 	let lastPage;
 	let images, contents;
 	try {
@@ -28,9 +29,16 @@ export async function load({}) {
 		await client.connect();
 		const collection = await client.db("test-box-db").collection("boxes");
 		
+		//if current page is too high, set it to the last page
+		let count = await collection.countDocuments();
+		lastPage = Math.ceil(count/10);
+	  if (page > lastPage) {
+			page = lastPage;
+			redirect(307, `/page/${page}`);
+	  }
 	  
-	  let imagesCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {images: 1}}).limit(10);
-	  let contentsCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {contents: 1}}).limit(10);
+	  let imagesCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {images: 1}}).skip((page-1)*10).limit(10);
+	  let contentsCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {contents: 1}}).skip((page-1)*10).limit(10);
 	  
 	  images = await imagesCursor.toArray()
 	  contents = await contentsCursor.toArray()
@@ -53,6 +61,7 @@ export async function load({}) {
 		active: active,
 		contents: transformContents(await contents),
 		photos: transformImgs(await images),
+		page: page,
 		lastPage: lastPage
 	};
 }

@@ -6,6 +6,7 @@
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
 	import { MasonryGrid } from '@egjs/svelte-grid';
+	import { page } from '$app/stores'
 
 	const align = 'start';
 	const column = 0;
@@ -14,7 +15,7 @@
 	
 	/** @type {import('./$types').PageData} */
 	export let data;
-	let pageNum = 1;
+	let pageNum = data.page;
 	let lastPage = data.lastPage;
 	let showModal = false;
 	let newBoxID = '';
@@ -56,7 +57,7 @@
 	
 	$:{
 		if(browser) {
-			if(pageNum != 1){
+			if(pageNum != data.page){
 				goto(`/page/${pageNum}`);
 			}
 		}
