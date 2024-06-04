@@ -28,6 +28,7 @@ export async function load({}) {
 		await client.connect();
 		const collection = await client.db("test-box-db").collection("boxes");
 		
+		lastPage = Math.ceil((await collection.countDocuments())/10);
 	  
 	  let imagesCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {images: 1}}).limit(10);
 	  let contentsCursor = await collection.find({  }, { sort: { lastModified: -1 }, projection: {contents: 1}}).limit(10);
