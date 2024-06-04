@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import 'carbon-components-svelte/css/g80.css';
-	import { Theme, Button, Modal, TextInput, Search, ClickableTile, Truncate, PaginationNav } from 'carbon-components-svelte';
+	import { Button, Modal, TextInput, Search, ClickableTile, Truncate, PaginationNav } from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
 	import { MasonryGrid } from '@egjs/svelte-grid';
@@ -80,14 +80,6 @@
 	<title>Home | Box Find</title>
 </svelte:head>
 
-<Theme
-	theme="g80"
-	tokens={{
-		'interactive-01': data.primary,
-		'hover-primary': data.hover,
-		'active-primary': data.active
-	}}
-/>
 
 <div class="wrapper">
 	<div class="searchBar">

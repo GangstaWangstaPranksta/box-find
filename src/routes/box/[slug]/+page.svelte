@@ -4,7 +4,6 @@
 	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
 	import {
-		Theme,
 		TextArea,
 		Button,
 		Modal,
@@ -214,14 +213,6 @@
 </svelte:head>
 
 <div class="wrapper">
-	<Theme
-		theme="g80"
-		tokens={{
-			'interactive-01': data.primary,
-			'hover-primary': data.hover,
-			'active-primary': data.active
-		}}
-	/>
 	{#if data.boxExist}
 		<div class="header">
 			<h1>Box: {data.box}</h1>

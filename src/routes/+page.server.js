@@ -42,16 +42,8 @@ export async function load({}) {
 		// Ensures that the client will close when you finish/error
 		//await client.close();
 	}
-	
-	let currentTime = new Date().getHours();
-	let primary = currentTime>7&&currentTime<21 ? "#19a619" : "#cf7f23"
-	let hover = currentTime>7&&currentTime<21 ? "#2cb82c" : "#d18a38"
-	let active = currentTime>7&&currentTime<21 ? "#098f09" : "#c96e06"
 
 	return {
-		primary: primary,
-		hover: hover,
-		active: active,
 		contents: transformContents(await contents),
 		photos: transformImgs(await images),
 		lastPage: lastPage
