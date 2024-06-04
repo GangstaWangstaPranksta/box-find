@@ -34,7 +34,7 @@ export async function load({ params }) {
 	
 	  } finally {
 		// Ensures that the client will close when you finish/error
-		await client.close();
+		if(client) await client.close();
 	  }
 
 	return {
