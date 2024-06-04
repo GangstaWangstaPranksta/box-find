@@ -25,6 +25,7 @@ export async function load({ params }) {
 	const regex = /^[0-9]+$/;
 	if (!regex.test(params.slug)) redirect(307, `/`);
 	let page = parseInt(params.slug);
+	if(page == 0) redirect(307, `/`);
 	let lastPage;
 	let images, contents;
 	try {
