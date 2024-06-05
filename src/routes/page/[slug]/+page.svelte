@@ -2,17 +2,24 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import 'carbon-components-svelte/css/g80.css';
-	import { Button, Modal, TextInput, Search, ClickableTile, Truncate, PaginationNav } from 'carbon-components-svelte';
+	import {
+		Button,
+		Modal,
+		TextInput,
+		Search,
+		ClickableTile,
+		Truncate,
+		PaginationNav
+	} from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import * as JsSearch from 'js-search';
 	import { MasonryGrid } from '@egjs/svelte-grid';
-	import { page } from '$app/stores'
 
 	const align = 'start';
 	const column = 0;
 	const gap = 16;
 	const defaultDirection = 'end';
-	
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 	let pageNum = data.page;
@@ -22,26 +29,25 @@
 
 	let searchQuery = '';
 
-
 	const search = new JsSearch.Search('id');
 	let searchDoc = Object.keys(data.contents).map((key) => ({
-			id: key,
-			content: data.contents[key]
-		}));
-		search.indexStrategy = new JsSearch.AllSubstringsIndexStrategy();
-		search.addIndex('id');
-		search.addIndex('content');
-		
-		search.addDocuments(searchDoc);
-	$:{
+		id: key,
+		content: data.contents[key]
+	}));
+	search.indexStrategy = new JsSearch.AllSubstringsIndexStrategy();
+	search.addIndex('id');
+	search.addIndex('content');
+
+	search.addDocuments(searchDoc);
+	$: {
 		searchDoc = Object.keys(data.contents).map((key) => ({
 			id: key,
 			content: data.contents[key]
 		}));
-		
+
 		search.addIndex('id');
 		search.addIndex('content');
-		
+
 		search.addDocuments(searchDoc);
 	}
 
@@ -54,10 +60,10 @@
 			result = searchDoc;
 		}
 	}
-	
-	$:{
-		if(browser) {
-			if(pageNum != data.page){
+
+	$: {
+		if (browser) {
+			if (pageNum != data.page) {
 				goto(`/page/${pageNum}`);
 			}
 		}
@@ -80,7 +86,6 @@
 <svelte:head>
 	<title>Home | Box Find</title>
 </svelte:head>
-
 
 <div class="wrapper">
 	<div class="searchBar">
@@ -109,14 +114,14 @@
 					<h4>Pictures</h4>
 					<MasonryGrid {defaultDirection} {gap} {align} {column}>
 						{#each data.photos[item.id] as photo}
-						<img src={photo} alt="o" style="min-width: 200px; width: 10vw; max-height: 350px;" />
+							<img src={photo} alt="o" style="min-width: 200px; width: 10vw; max-height: 350px;" />
 						{/each}
 					</MasonryGrid>
 				{/if}
 			</ClickableTile>
 		{/each}
 		<div style="display:flex; justify-content:center; align-items:center;">
-			<PaginationNav total={lastPage} tooltipPosition="top" bind:page={pageNum}/>
+			<PaginationNav total={lastPage} tooltipPosition="top" bind:page={pageNum} />
 		</div>
 	{:else}
 		<h3>No results found for "{searchQuery}"</h3>

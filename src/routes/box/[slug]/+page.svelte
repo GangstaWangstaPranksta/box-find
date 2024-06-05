@@ -74,7 +74,11 @@
 				}
 			});
 			if (!res.ok) {
-				addToast('error', 'Oops, something went wrong.',`An error occured, status: ${res.status}.`);
+				addToast(
+					'error',
+					'Oops, something went wrong.',
+					`An error occured, status: ${res.status}.`
+				);
 			}
 			contentsSave = await res.json();
 			if (contentsSave.acknowledged && contentsSave.modifiedCount == 1) initContents = contents;
@@ -124,8 +128,8 @@
 				'content-type': 'application/json'
 			}
 		});
-		let data = await res.json()
-		if((res.ok) && data.acknowledged && data.matchedCount == 1) return true;
+		let data = await res.json();
+		if (res.ok && data.acknowledged && data.matchedCount == 1) return true;
 		else return res.status;
 	};
 	const saveDelImg = async () => {
@@ -147,9 +151,9 @@
 				'content-type': 'application/json'
 			}
 		});
-		if (await res.ok && await res.json() == `${id} box deleted`) {
+		if ((await res.ok) && (await res.json()) == `${id} box deleted`) {
 			addToast('success', 'Deleted', `${id} box deleted.`);
-			goto(`/`)
+			goto(`/`);
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
@@ -166,8 +170,8 @@
 			goto(`/box/${editBoxName}`);
 			id = editBoxName;
 			editModalOpen = false;
-		}else{
-			addToast('error', 'Oops, something went wrong.',  `An error occured, status: ${res.status}.`);
+		} else {
+			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
 	};
 	const splicePhoto = (index) => {
@@ -197,15 +201,14 @@
 	};
 
 	const addToast = (kind, title, subtitle) => {
-		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null}];
-		toasts = toasts.map(toast => {
-		  toast.timeoutId = setTimeout(() => {
-			toasts = toasts.filter(t => t !== toast);
-		  }, 10000); // 10 seconds
-		  return toast;
+		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null }];
+		toasts = toasts.map((toast) => {
+			toast.timeoutId = setTimeout(() => {
+				toasts = toasts.filter((t) => t !== toast);
+			}, 10000); // 10 seconds
+			return toast;
 		});
 	};
-
 </script>
 
 <svelte:head>
@@ -343,17 +346,18 @@
 		</Modal>
 		<div class="toasts">
 			{#each toasts as toast}
-				<div class="toast"
-					in:fade={{ duration: 250, easing:quintIn }}
-					out:fade={{ duration: 500, easing:quintOut }}
+				<div
+					class="toast"
+					in:fade={{ duration: 250, easing: quintIn }}
+					out:fade={{ duration: 500, easing: quintOut }}
 				>
-				<ToastNotification
-				kind = {toast.kind}
-				title = {toast.title}
-				subtitle = {toast.subtitle}
-				caption={toast.date.toLocaleString()}
-				lowContrast
-				/>
+					<ToastNotification
+						kind={toast.kind}
+						title={toast.title}
+						subtitle={toast.subtitle}
+						caption={toast.date.toLocaleString()}
+						lowContrast
+					/>
 				</div>
 			{/each}
 		</div>

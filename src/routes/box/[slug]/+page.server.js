@@ -1,21 +1,21 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import dotenv from 'dotenv'
-dotenv.config()
+import dotenv from 'dotenv';
+dotenv.config();
 
 let uri;
-if(process.env.NODE_ENV !== 'production') {
-	uri = `mongodb+srv://${process.env.MONGO_URI}`
+if (process.env.NODE_ENV !== 'production') {
+	uri = `mongodb+srv://${process.env.MONGO_URI}`;
 } else {
-	uri = `mongodb://${process.env.MONGO_URI}`
+	uri = `mongodb://${process.env.MONGO_URI}`;
 }
 
-const client =  new MongoClient(uri, {
+const client = new MongoClient(uri, {
 	serverApi: {
-	  version: ServerApiVersion.v1,
-	  strict: true,
-	  deprecationErrors: true,
-	},
-  });
+		version: ServerApiVersion.v1,
+		strict: true,
+		deprecationErrors: true
+	}
+});
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ params }) {
@@ -23,19 +23,20 @@ export async function load({ params }) {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
-		const collection = await client.db("test-box-db").collection("boxes");
-		let boxDataCursor = await collection.find({ _id: decodeURIComponent(params.slug) }, { sort: { lastModified: -1 }, projection: { }})
-  
-		contents = await boxDataCursor.toArray()
+		const collection = await client.db('test-box-db').collection('boxes');
+		let boxDataCursor = await collection.find(
+			{ _id: decodeURIComponent(params.slug) },
+			{ sort: { lastModified: -1 }, projection: {} }
+		);
 
-		boxExist = !(contents[0]===undefined)
-		contents = (contents[0]===undefined) ? [{ images:[], contents:"" }] : contents
+		contents = await boxDataCursor.toArray();
 
-	
-	  } finally {
+		boxExist = !(contents[0] === undefined);
+		contents = contents[0] === undefined ? [{ images: [], contents: '' }] : contents;
+	} finally {
 		// Ensures that the client will close when you finish/error
-		if(client) await client.close();
-	  }
+		if (client) await client.close();
+	}
 
 	return {
 		box: decodeURIComponent(params.slug),
