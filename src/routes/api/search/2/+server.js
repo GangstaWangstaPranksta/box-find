@@ -20,26 +20,28 @@ const client = new MongoClient(uri, {
 });
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
-	const { query } = await request.json();
+export async function GET({ url }) {
+	const query = decodeURIComponent(url.searchParams.get('query'));
 	let contents;
 	let res;
-	let t1 = performance.now();
+	let t1, t2;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db('test-box-db').collection('boxes');
-
+		
 		let contentsCursor = collection.find({}, { projection: { contents: 1 } });
 		contents = await contentsCursor.toArray();
+		t1 = performance.now();
 		res = fuzzyFilter(contents, query, { fields: ['_id', 'contents'] });
+		t2 = performance.now();
 		//fetch imgs for each result _id as promise and append to json as they resolve
 		//await all promises
 		let dbRes = []
 		for(let box of res){
 			dbRes.push(collection.findOne({_id: box.item._id}, {projection: {images: 1}}))
-		}
-		await Promise.all(dbRes)
+			}
+			await Promise.all(dbRes)
 		.then((imgs) => {
 			for(let i = 0; i < dbRes.length; i++){
 				if(imgs[i].images) res[i].item.images = imgs[i].images
@@ -50,7 +52,6 @@ export async function POST({ request }) {
 		await client.close();
 	}
 
-	let t2 = performance.now();
 	console.log(t2 - t1);
 
 	return json(res);

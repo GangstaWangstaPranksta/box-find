@@ -20,8 +20,8 @@ const client = new MongoClient(uri, {
 });
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
-	const { query } = await request.json();
+export async function GET({ url }) {
+	const query = decodeURIComponent(url.searchParams.get('query'));
     let contents;
 	let res;
 	let t1 = performance.now()
