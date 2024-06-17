@@ -30,7 +30,9 @@
 	let newBoxID = '';
 
 	let searchQuery = '';
+	let searchedQuery = '';
 	let results = [];
+	let fromNoSearch = true;
 	let searching = false;
 	let status = "finished";
 
@@ -49,12 +51,15 @@
 					const res = await fetch(`/api/search/2?query=${encodeURIComponent(searchQuery)}`);
 					results = await res.json();
 					searching = false;
-					status = "finished"
+					fromNoSearch = false;
+					status = "finished";
+					searchedQuery = searchQuery;
 				})();
 			} else {
-				results = [];
+				//results = [];
 				$page.url.searchParams.delete('query');
 				replaceState($page.url, {});
+				fromNoSearch = true;
 			}
 			oldSearchQuery = searchQuery;
 		}
@@ -71,6 +76,8 @@
 				results = await res.json();
 				searching = false;
 				status = "finished";
+				fromNoSearch = false;
+				searchedQuery = searchQuery;
 			})();
 		}
 	});
@@ -120,7 +127,7 @@
 		</span>
 	</div>
 
-	{#if searchQuery == '' || searching}
+	{#if searchQuery == '' || (searching && fromNoSearch)} <!-- default home page -->
 		<!-- likely will change searching behavior -->
 		{#each data.contents as item}
 			<ClickableTile href="/box/{encodeURIComponent(item._id)}" style="margin-bottom: 1em;">
@@ -143,7 +150,7 @@
 		<div style="display:flex; justify-content:center; align-items:center;">
 			<PaginationNav total={lastPage} tooltipPosition="top" bind:page={pageNum} />
 		</div>
-	{:else if results.length > 0 || searching}
+	{:else if results.length > 0 || (searching && results.length > 0) }
 		<!-- search results -->
 		{#each results as item}
 			<ClickableTile href="/box/{encodeURIComponent(item.item._id)}" style="margin-bottom: 1em;">
@@ -170,7 +177,7 @@
 			</div>
 		{/if}
 	{:else}
-		<h3>No results found for "{searchQuery}"</h3>
+		<h3>No results found for "{searchedQuery}"</h3>
 		<p>But here's a cookie! 🍪</p>
 	{/if}
 </div>
