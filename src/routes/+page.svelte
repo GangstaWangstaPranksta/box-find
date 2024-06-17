@@ -208,6 +208,5 @@
 	}
 	.newBox {
 		margin-left: 1em;
-		width: min-content;
 	}
 </style>
