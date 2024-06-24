@@ -24,7 +24,6 @@ export async function GET({ url }) {
 	const query = decodeURIComponent(url.searchParams.get('query'));
 	let contents;
 	let res;
-	let t1, t2;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
@@ -32,9 +31,7 @@ export async function GET({ url }) {
 		
 		let contentsCursor = collection.find({}, { projection: { contents: 1 } });
 		contents = await contentsCursor.toArray();
-		t1 = performance.now();
 		res = fuzzyFilter(contents, query, { fields: ['_id', 'contents'] });
-		t2 = performance.now();
 		//fetch imgs for each result _id as promise and append to json as they resolve
 		//await all promises
 		let dbRes = []
@@ -51,8 +48,6 @@ export async function GET({ url }) {
 		// Ensures that the client will close when you finish/error
 		await client.close();
 	}
-
-	console.log(t2 - t1);
 
 	return json(res);
 }
