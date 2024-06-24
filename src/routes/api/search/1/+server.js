@@ -1,5 +1,7 @@
+import { json } from '@sveltejs/kit';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv';
+import { fuzzyFilter } from 'fuzzbunny';
 dotenv.config();
 
 let uri;
@@ -17,29 +19,25 @@ const client = new MongoClient(uri, {
 	}
 });
 
-/** @type {import('./$types').PageLoad} */
-export async function load({}) {
-	let lastPage;
-	let contents;
+/** @type {import('./$types').RequestHandler} */
+export async function GET({ url }) {
+	const query = decodeURIComponent(url.searchParams.get('query'));
+    let contents;
+	let res;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db('test-box-db').collection('boxes');
 
-		lastPage = Math.ceil((await collection.countDocuments()) / 10);
-
 		let contentsCursor = collection
-			.find({}, { sort: { lastModified: -1 }, projection: { images: 1, contents:1 } })
-			.limit(10);
-
-		contents = await contentsCursor.toArray();
+			.find({}, { projection: { contents: 1, images: 1 } })
+        contents = await contentsCursor.toArray();
 	} finally {
 		// Ensures that the client will close when you finish/error
-		if (client) await client.close();
+		await client.close();
 	}
-
-	return {
-		contents: contents,
-		lastPage: lastPage
-	};
+    
+    res = fuzzyFilter(contents, query, { fields: ['_id','contents'] });
+	
+	return json(res);
 }
