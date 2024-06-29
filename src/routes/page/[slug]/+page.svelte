@@ -82,7 +82,6 @@
 		}
 	});
 
-
 	$: {
 		if (browser) {
 			if (pageNum != data.page) {
@@ -124,7 +123,8 @@
 		</span>
 	</div>
 
-	{#if searchQuery == '' || (searching && fromNoSearch)} <!-- default home page -->
+	{#if searchQuery == '' || (searching && fromNoSearch)}
+		<!-- default home page -->
 		<!-- likely will change searching behavior -->
 		{#each data.contents as item}
 			<ClickableTile href="/box/{encodeURIComponent(item._id)}" style="margin-bottom: 1em;">
@@ -147,7 +147,7 @@
 		<div style="display:flex; justify-content:center; align-items:center;">
 			<PaginationNav total={lastPage} tooltipPosition="top" bind:page={pageNum} />
 		</div>
-	{:else if results.length > 0 || (searching && results.length > 0) }
+	{:else if results.length > 0 || (searching && results.length > 0)}
 		<!-- search results -->
 		{#each results as item}
 			<ClickableTile href="/box/{encodeURIComponent(item.item._id)}" style="margin-bottom: 1em;">

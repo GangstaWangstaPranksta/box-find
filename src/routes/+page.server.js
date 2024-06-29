@@ -18,7 +18,7 @@ const client = new MongoClient(uri, {
 });
 
 /** @type {import('./$types').PageLoad} */
-export async function load({}) {
+export async function load({ }) {
 	let lastPage;
 	let contents;
 	try {
@@ -29,7 +29,7 @@ export async function load({}) {
 		lastPage = Math.ceil((await collection.countDocuments()) / 10);
 
 		let contentsCursor = collection
-			.find({}, { sort: { lastModified: -1 }, projection: { images: 1, contents:1 } })
+			.find({}, { sort: { lastModified: -1 }, projection: { images: 1, contents: 1 } })
 			.limit(10);
 
 		contents = await contentsCursor.toArray();

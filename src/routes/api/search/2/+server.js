@@ -28,22 +28,22 @@ export async function GET({ url }) {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db('test-box-db').collection('boxes');
-		
+
 		let contentsCursor = collection.find({}, { projection: { contents: 1 } });
 		contents = await contentsCursor.toArray();
 		res = fuzzyFilter(contents, query, { fields: ['_id', 'contents'] });
 		//fetch imgs for each result _id as promise and append to json as they resolve
 		//await all promises
 		let dbRes = []
-		for(let box of res){
-			dbRes.push(collection.findOne({_id: box.item._id}, {projection: {images: 1}}))
-			}
-			await Promise.all(dbRes)
-		.then((imgs) => {
-			for(let i = 0; i < dbRes.length; i++){
-				if(imgs[i].images) res[i].item.images = imgs[i].images
-			}
-		})
+		for (let box of res) {
+			dbRes.push(collection.findOne({ _id: box.item._id }, { projection: { images: 1 } }))
+		}
+		await Promise.all(dbRes)
+			.then((imgs) => {
+				for (let i = 0; i < dbRes.length; i++) {
+					if (imgs[i].images) res[i].item.images = imgs[i].images
+				}
+			})
 	} finally {
 		// Ensures that the client will close when you finish/error
 		await client.close();

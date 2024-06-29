@@ -4,19 +4,19 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 let uri;
-if(process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
 	uri = `mongodb+srv://${process.env.MONGO_URI}`
 } else {
 	uri = `mongodb://${process.env.MONGO_URI}`
 }
 
-const client =  new MongoClient(uri, {
+const client = new MongoClient(uri, {
 	serverApi: {
-	  version: ServerApiVersion.v1,
-	  strict: true,
-	  deprecationErrors: true,
+		version: ServerApiVersion.v1,
+		strict: true,
+		deprecationErrors: true,
 	},
-  });
+});
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
@@ -27,13 +27,13 @@ export async function POST({ request }) {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = await client.db("test-box-db").collection("boxes");
-		
-		res = await collection.deleteOne({ _id: id }).catch((e)=>{console.error(e)});	
-	
-	  } finally {
+
+		res = await collection.deleteOne({ _id: id }).catch((e) => { console.error(e) });
+
+	} finally {
 		// Ensures that the client will close when you finish/error
 		await client.close();
-	  }
+	}
 
 	return json(`${id} box deleted`);
 }

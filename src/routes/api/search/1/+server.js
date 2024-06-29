@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ url }) {
 	const query = decodeURIComponent(url.searchParams.get('query'));
-    let contents;
+	let contents;
 	let res;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
@@ -31,13 +31,13 @@ export async function GET({ url }) {
 
 		let contentsCursor = collection
 			.find({}, { projection: { contents: 1, images: 1 } })
-        contents = await contentsCursor.toArray();
+		contents = await contentsCursor.toArray();
 	} finally {
 		// Ensures that the client will close when you finish/error
 		await client.close();
 	}
-    
-    res = fuzzyFilter(contents, query, { fields: ['_id','contents'] });
-	
+
+	res = fuzzyFilter(contents, query, { fields: ['_id', 'contents'] });
+
 	return json(res);
 }

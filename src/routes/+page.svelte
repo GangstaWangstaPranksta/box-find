@@ -34,7 +34,7 @@
 	let results = [];
 	let fromNoSearch = true;
 	let searching = false;
-	let status = "finished";
+	let status = 'finished';
 
 	//search stuff
 
@@ -44,7 +44,7 @@
 		if (searchQuery !== oldSearchQuery) {
 			if (searchQuery != '') {
 				searching = true;
-				status = "active";
+				status = 'active';
 				(async () => {
 					$page.url.searchParams.set('query', searchQuery);
 					replaceState($page.url, {});
@@ -52,7 +52,7 @@
 					results = await res.json();
 					searching = false;
 					fromNoSearch = false;
-					status = "finished";
+					status = 'finished';
 					searchedQuery = searchQuery;
 				})();
 			} else {
@@ -70,12 +70,12 @@
 		if ($page.url.searchParams.has('query')) {
 			searchQuery = $page.url.searchParams.get('query');
 			searching = true;
-			status = "active";
+			status = 'active';
 			(async () => {
 				const res = await fetch(`/api/search/2?query=${encodeURIComponent(searchQuery)}`);
 				results = await res.json();
 				searching = false;
-				status = "finished";
+				status = 'finished';
 				fromNoSearch = false;
 				searchedQuery = searchQuery;
 			})();
@@ -112,8 +112,8 @@
 <div class="wrapper">
 	<div class="searchBar">
 		<span>
-			<Search bind:value={searchQuery}/>
-			<ProgressBar size="sm" kind="inline" {status} hideLabel="true"/>
+			<Search bind:value={searchQuery} />
+			<ProgressBar size="sm" kind="inline" {status} hideLabel="true" />
 		</span>
 
 		<span class="newBox">
@@ -127,7 +127,8 @@
 		</span>
 	</div>
 
-	{#if searchQuery == '' || (searching && fromNoSearch)} <!-- default home page -->
+	{#if searchQuery == '' || (searching && fromNoSearch)}
+		<!-- default home page -->
 		<!-- likely will change searching behavior -->
 		{#each data.contents as item}
 			<ClickableTile href="/box/{encodeURIComponent(item._id)}" style="margin-bottom: 1em;">
@@ -150,7 +151,7 @@
 		<div style="display:flex; justify-content:center; align-items:center;">
 			<PaginationNav total={lastPage} tooltipPosition="top" bind:page={pageNum} />
 		</div>
-	{:else if results.length > 0 || (searching && results.length > 0) }
+	{:else if results.length > 0 || (searching && results.length > 0)}
 		<!-- search results -->
 		{#each results as item}
 			<ClickableTile href="/box/{encodeURIComponent(item.item._id)}" style="margin-bottom: 1em;">
