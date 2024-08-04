@@ -183,6 +183,7 @@
 	bind:open={showModal}
 	modalHeading="Create a new Box"
 	primaryButtonText="Create Box"
+	selectorPrimaryFocus="#box-name"
 	secondaryButtonText="Cancel"
 	on:click:button--secondary={() => (showModal = false)}
 	on:click:button--primary={() => {

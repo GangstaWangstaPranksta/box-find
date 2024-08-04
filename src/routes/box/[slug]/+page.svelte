@@ -318,6 +318,7 @@
 			modalHeading="New Box Name/ID"
 			primaryButtonText="Change Box Name"
 			secondaryButtonText="Cancel"
+			selectorPrimaryFocus="#box-name"
 			on:click:button--secondary={() => (editModalOpen = false)}
 			on:click:button--primary={() => {
 				renameBox();
