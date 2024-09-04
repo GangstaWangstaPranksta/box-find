@@ -24,9 +24,9 @@ export async function GET() {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
-		const collection = await client.db("test-box-db").collection("boxes");
+		const collection = client.db("test-box-db").collection("boxes");
 
-		res = await collection.find({})
+		res = collection.find({})
 		res = await res.toArray()
 
 	} finally {

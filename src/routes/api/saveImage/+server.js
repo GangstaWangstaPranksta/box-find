@@ -39,7 +39,7 @@ export async function POST({ request }) {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
-		const collection = await client.db("test-box-db").collection("boxes");
+		const collection = client.db("test-box-db").collection("boxes");
 
 		res = await collection.updateOne({ _id: id }, { $push: { images: compressedBase64 }, $set: { lastModified: Date.now() } });
 
