@@ -23,8 +23,8 @@ export async function load({ params }) {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
-		const collection = await client.db('test-box-db').collection('boxes');
-		let boxDataCursor = await collection.find(
+		const collection = client.db('test-box-db').collection('boxes');
+		let boxDataCursor = collection.find(
 			{ _id: decodeURIComponent(params.slug) },
 			{ sort: { lastModified: -1 }, projection: {} }
 		);
