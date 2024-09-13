@@ -32,7 +32,7 @@
 	let searchQuery = '';
 	let searchedQuery = '';
 	let results = [];
-	let fromNoSearch = true;
+	let fromEmptySearch = true;
 	let searching = false;
 	let status = 'finished';
 
@@ -51,7 +51,7 @@
 					const res = await fetch(`/api/search/2?query=${encodeURIComponent(searchQuery)}`);
 					results = await res.json();
 					searching = false;
-					fromNoSearch = false;
+					fromEmptySearch = false;
 					status = 'finished';
 					searchedQuery = searchQuery;
 				})();
@@ -59,7 +59,7 @@
 				//results = [];
 				$page.url.searchParams.delete('query');
 				replaceState($page.url, {});
-				fromNoSearch = true;
+				fromEmptySearch = true;
 			}
 			oldSearchQuery = searchQuery;
 		}
@@ -76,7 +76,7 @@
 				results = await res.json();
 				searching = false;
 				status = 'finished';
-				fromNoSearch = false;
+				fromEmptySearch = false;
 				searchedQuery = searchQuery;
 			})();
 		}
@@ -104,7 +104,7 @@
 		}
 	};
 
-	const concatImgAlt = (id) => {
+	const composeImageAltText = (id) => {
 		return `Picture of "${id}'s" contents`;
 	};
 </script>
@@ -131,7 +131,7 @@
 		</span>
 	</div>
 
-	{#if searchQuery == '' || (searching && fromNoSearch)}
+	{#if searchQuery == '' || (searching && fromEmptySearch)}
 		<!-- default home page -->
 		<!-- likely will change searching behavior -->
 		{#each data.contents as item}
@@ -148,7 +148,7 @@
 						{#each item.images as photo}
 							<img
 								src={photo}
-								alt={concatImgAlt(item._id)}
+								alt={composeImageAltText(item._id)}
 								style="min-width: 200px; width: 10vw; max-height: 350px;"
 							/>
 						{/each}
@@ -175,7 +175,7 @@
 						{#each item.item.images as photo}
 							<img
 								src={photo}
-								alt={concatImgAlt(item.item._id)}
+								alt={composeImageAltText(item.item._id)}
 								style="min-width: 200px; width: 10vw; max-height: 350px;"
 							/>
 						{/each}
