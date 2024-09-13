@@ -18,8 +18,10 @@
 	import Camera from 'carbon-icons-svelte/lib/Camera.svelte';
 	import Home from 'carbon-icons-svelte/lib/Home.svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
+
 	import { MasonryGrid } from '@egjs/svelte-grid';
 	import { browser } from '$app/environment';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 
@@ -151,7 +153,7 @@
 				'content-type': 'application/json'
 			}
 		});
-		if ((await res.ok) && (await res.json()) == `${id} box deleted`) {
+		if (res.ok && (await res.json()) == `${id} box deleted`) {
 			addToast('success', 'Deleted', `${id} box deleted.`);
 			goto(`/`);
 		} else {
