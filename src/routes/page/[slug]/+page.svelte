@@ -102,6 +102,10 @@
 			goto(`/box/${encodeURIComponent(id)}`);
 		}
 	};
+
+	const concatImgAlt = (id) => {
+		return `Picture of "${id}'s" contents`;
+	};
 </script>
 
 <svelte:head>
@@ -138,7 +142,11 @@
 					<h4>Pictures</h4>
 					<MasonryGrid {defaultDirection} {gap} {align} {column}>
 						{#each item.images as photo}
-							<img src={photo} alt="o" style="min-width: 200px; width: 10vw; max-height: 350px;" />
+							<img
+								src={photo}
+								alt={concatImgAlt(item._id)}
+								style="min-width: 200px; width: 10vw; max-height: 350px;"
+							/>
 						{/each}
 					</MasonryGrid>
 				{/if}
@@ -161,7 +169,11 @@
 					<h4>Pictures</h4>
 					<MasonryGrid {defaultDirection} {gap} {align} {column}>
 						{#each item.item.images as photo}
-							<img src={photo} alt="o" style="min-width: 200px; width: 10vw; max-height: 350px;" />
+							<img
+								src={photo}
+								alt={concatImgAlt(item.item._id)}
+								style="min-width: 200px; width: 10vw; max-height: 350px;"
+							/>
 						{/each}
 					</MasonryGrid>
 				{/if}
