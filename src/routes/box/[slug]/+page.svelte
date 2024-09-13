@@ -111,16 +111,13 @@
 		else return res.status;
 	};
 	const saveImgs = async () => {
-		//loadingStatus = "active";
 		let values = await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
 		newPhotos = [];
-		//loadingStatus = "finished";
 		if (values.every((value) => value === true)) {
 			return 'saved';
 		} else {
 			return values.find((value) => value !== true);
 		}
-		//return 'saved';
 	};
 	const unUploadImg = async (base64) => {
 		const res = await fetch('/api/delImage', {
@@ -195,7 +192,6 @@
 			}
 		});
 		if ((await res.json()) == `${id} box created`) {
-			//goto(`/box/${id}`);
 			invalidateAll();
 			initContents = '';
 			contents = '';
