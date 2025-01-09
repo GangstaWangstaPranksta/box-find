@@ -21,7 +21,7 @@
 	"type": "module",
 	"dependencies": {
 		"@egjs/svelte-grid": "^1.16.0",
-		"@sveltejs/adapter-node": "^5.2.2",
+		"@sveltejs/adapter-node": "^5.2.11",
 		"carbon-components-svelte": "^0.85.2",
 		"carbon-icons-svelte": "^12.11.0",
 		"dotenv": "^16.4.5",
