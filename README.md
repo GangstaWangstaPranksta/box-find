@@ -3,7 +3,7 @@
 A SvelteKit-based box storage organizer system using the IBM Carbon Components & Icon Library, sharp, uFuzzy, mongoDB, and @egjs/svelte-grid.
 
 ## Deployment
-Locally hosted on a node server in Docker alongside mongoDB (see docker-compose.yaml).
+Locally hosted on a node server in Docker alongside mongoDB (see `docker-compose.yaml`).
 
 ## API Routes
 `/api/`
