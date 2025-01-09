@@ -21,17 +21,25 @@ const client = new MongoClient(uri, {
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
 	const { id } = await request.json();
-	let res;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db("test-box-db").collection("boxes");
 
-		res = await collection.insertOne({ _id: id, contents: "", images: [], lastModified: Date.now() })
+		try {
+
+			await collection.insertOne({ _id: id, contents: "", images: [], lastModified: Date.now() })
+		}
+		catch (e) {
+			if (e.code === 11000) {
+				return json({ error: "Box already exists" }, { status: 409 });
+			}
+			throw e;
+		}
 
 	} finally {
 		// Ensures that the client will close when you finish/error
 		await client.close();
 	}
-	return json(`${res.insertedId} box created`);
+	return json({ id });
 }

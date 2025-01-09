@@ -3,6 +3,8 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
 	import {
 		Button,
@@ -12,7 +14,8 @@
 		ClickableTile,
 		Truncate,
 		PaginationNav,
-		ProgressBar
+		ProgressBar,
+		ToastNotification
 	} from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import { MasonryGrid } from '@egjs/svelte-grid';
@@ -39,6 +42,8 @@
 	//search stuff
 
 	let oldSearchQuery = searchQuery;
+
+	let toasts = [];
 
 	$: {
 		if (searchQuery !== oldSearchQuery) {
@@ -99,9 +104,27 @@
 				'content-type': 'application/json'
 			}
 		});
-		if ((await res.json()) == `${id} box created`) {
+		const resJson = await res.json();
+		console.log(resJson);
+		if (res.status != 409 && resJson.id == id) {
 			goto(`/box/${encodeURIComponent(id)}`);
+		} else if (res.status == 409) {
+			showModal = false;
+			addToast('error', 'Error creating a new box', `A box with id: "${id}" already exists.`);
+		} else {
+			showModal = false;
+			addToast('error', 'Error creating a new box', `An unknown error occurred.`);
 		}
+	};
+
+	const addToast = (kind, title, subtitle) => {
+		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null }];
+		toasts = toasts.map((toast) => {
+			toast.timeoutId = setTimeout(() => {
+				toasts = toasts.filter((t) => t !== toast);
+			}, 10000); // 10 seconds
+			return toast;
+		});
 	};
 
 	const composeImageAltText = (id) => {
@@ -201,15 +224,42 @@
 	primaryButtonText="Create Box"
 	selectorPrimaryFocus="#box-name"
 	secondaryButtonText="Cancel"
-	on:click:button--secondary={() => (showModal = false)}
+	on:click:button--secondary={() => (showModal = false)((newBoxID = ''))}
 	on:click:button--primary={() => {
-		newBox(newBoxID);
+		if (newBoxID != '') {
+			newBox(newBoxID);
+			newBoxID = '';
+		}
 	}}
 >
 	<TextInput id="box-name" labelText="Box ID" placeholder="Enter box ID..." bind:value={newBoxID} />
 </Modal>
 
+<div class="toasts">
+	{#each toasts as toast}
+		<div
+			class="toast"
+			in:fade={{ duration: 250, easing: quintIn }}
+			out:fade={{ duration: 500, easing: quintOut }}
+		>
+			<ToastNotification
+				kind={toast.kind}
+				title={toast.title}
+				subtitle={toast.subtitle}
+				caption={toast.date.toLocaleString()}
+				lowContrast
+			/>
+		</div>
+	{/each}
+</div>
+
 <style>
+	.toasts {
+		position: fixed;
+		z-index: 1;
+		bottom: 15px;
+		right: 15px;
+	}
 	.wrapper {
 		margin: 1.5em;
 	}
