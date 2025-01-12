@@ -28,12 +28,17 @@ export async function POST({ request }) {
 		await client.connect();
 		const collection = client.db("test-box-db").collection("boxes");
 
-		res = await collection.deleteOne({ _id: id }).catch((e) => { console.error(e) });
+		res = await collection.deleteOne({ _id: id });
 
 	} finally {
 		// Ensures that the client will close when you finish/error
 		await client.close();
 	}
-
-	return json(`${id} box deleted`);
+	if (res.deletedCount === 0) {
+		return json({ error: "No box with id found" }, { status: 404 });
+	} else if (res.deletedCount === 1) {
+		return json({ status: "ok" });
+	} else {
+		return json({ error: "Unexpected Server Error" }, { status: 500 });
+	}
 }
