@@ -19,29 +19,30 @@ const client = new MongoClient(uri, {
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ params }) {
-	let contents, boxExist;
+	const id = (params.slug);
+	let contents, images, boxExist;
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db('test-box-db').collection('boxes');
-		let boxDataCursor = collection.find(
-			{ _id: decodeURIComponent(params.slug) },
+
+		let box = await collection.findOne(
+			{ _id: id },
 			{ sort: { lastModified: -1 }, projection: {} }
 		);
 
-		contents = await boxDataCursor.toArray();
-
-		boxExist = !(contents[0] === undefined);
-		contents = contents[0] === undefined ? [{ images: [], contents: '' }] : contents;
+		boxExist = box != null;
+		contents = boxExist ? box.contents : '';
+		images = boxExist ? box.images : [];
 	} finally {
 		// Ensures that the client will close when you finish/error
 		if (client) await client.close();
 	}
 
 	return {
-		box: decodeURIComponent(params.slug),
-		contents: await contents[0].contents,
-		images: await contents[0].images,
+		box: id,
+		contents,
+		images,
 		boxExist
 	};
 }
