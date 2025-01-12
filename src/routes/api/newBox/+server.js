@@ -21,14 +21,15 @@ const client = new MongoClient(uri, {
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
 	const { id } = await request.json();
+	let res = json({ error: "Unexpected Server Error" }, { status: 500 });
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const collection = client.db("test-box-db").collection("boxes");
 
 		try {
-
-			await collection.insertOne({ _id: id, contents: "", images: [], lastModified: Date.now() })
+			const insertedDoc = await collection.insertOne({ _id: id, contents: "", images: [], lastModified: Date.now() })
+			res = json({ id: insertedDoc.insertedId });
 		}
 		catch (e) {
 			await client.close();
@@ -41,5 +42,5 @@ export async function POST({ request }) {
 		// Ensures that the client will close when you finish/error
 		await client.close();
 	}
-	return json({ id });
+	return res;
 }
