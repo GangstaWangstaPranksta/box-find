@@ -104,7 +104,7 @@
 			}
 		});
 		const resJson = await res.json();
-		console.log(resJson);
+		//console.log(resJson);
 		if (res.status != 409 && resJson.id == id) {
 			goto(`/box/${encodeURIComponent(id)}`);
 		} else if (res.status == 409) {
