@@ -31,10 +31,10 @@ export async function POST({ request }) {
 			await collection.insertOne({ _id: id, contents: "", images: [], lastModified: Date.now() })
 		}
 		catch (e) {
+			await client.close();
 			if (e.code === 11000) {
 				return json({ error: "Box already exists" }, { status: 409 });
 			}
-			throw e;
 		}
 
 	} finally {
