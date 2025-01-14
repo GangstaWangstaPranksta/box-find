@@ -1,13 +1,10 @@
 <script>
 	import 'carbon-components-svelte/css/g80.css';
 	import { Button, Modal, TextInput } from 'carbon-components-svelte';
-	import Exit from 'carbon-icons-svelte/lib/Exit.svelte';
 
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { replaceState } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
 
 	let editBoxName = '';
 	let modalShow = false;
@@ -22,7 +19,6 @@
 
 	function hideModal() {
 		console.log('hideModal');
-		//history.back();
 		replaceState('', {
 			showModal: false
 		});
@@ -61,7 +57,6 @@
     {modalShow}
 </pre>
 
-<!-- {#if $page.state.showModal} -->
 <Modal
 	bind:open={modalShow}
 	modalHeading="New Box Name/ID"
@@ -81,7 +76,6 @@
 		bind:value={editBoxName}
 	/>
 </Modal>
-<!-- {/if} -->
 
 <Button
 	on:click={() => {
