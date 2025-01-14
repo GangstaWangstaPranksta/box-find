@@ -45,9 +45,7 @@
 		//handles page state update to false, updating modalShow
 		console.log('page state: ', $page.state?.showModal);
 		if (!$page.state?.showModal) {
-			if (modalShow) {
-				modalShow = false;
-			}
+			modalShow = false;
 		}
 	}
 
