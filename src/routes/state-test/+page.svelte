@@ -10,46 +10,37 @@
 	let modalShow = false;
 
 	function showModal() {
-		console.log('showModal called');
 		modalShow = true;
-		console.log('modalShow: ', modalShow);
 		pushState('', {
 			showModal: true
 		});
 	}
 
 	function hideModal() {
-		console.log('hideModal');
 		replaceState('', {
 			showModal: false
 		});
 		modalShow = false;
-		console.log('backed, new page state: ', $page.state);
 	}
 
 	function renameBox() {
-		console.log('renameBox: ', editBoxName);
+		//console.log('renameBox: ', editBoxName);
 	}
 
 	$: {
 		if (!modalShow) {
 			if ($page.state?.showModal) {
-				console.log('page state show modal is true');
 				hideModal();
-				//console.log('test');
 			}
 		}
 	}
 
 	$: {
 		//handles page state update to false, updating modalShow
-		console.log('page state: ', $page.state?.showModal);
 		if (!$page.state?.showModal) {
 			modalShow = false;
 		}
 	}
-
-	$: console.log('modalShow: ', modalShow);
 </script>
 
 <pre>
