@@ -12,6 +12,7 @@
 	function showModal() {
 		console.log('showModal called');
 		modalShow = true;
+		console.log('modalShow: ', modalShow);
 		pushState('', {
 			showModal: true
 		});
@@ -22,6 +23,7 @@
 		replaceState('', {
 			showModal: false
 		});
+		modalShow = false;
 		console.log('backed, new page state: ', $page.state);
 	}
 
@@ -31,9 +33,8 @@
 
 	$: {
 		if (!modalShow) {
-			console.log('modalShow is false, page state is :', $page.state?.showModal);
 			if ($page.state?.showModal) {
-				console.log('second test is true');
+				console.log('page state show modal is true');
 				hideModal();
 				//console.log('test');
 			}
@@ -41,6 +42,7 @@
 	}
 
 	$: {
+		//handles page state update to false, updating modalShow
 		console.log('page state: ', $page.state?.showModal);
 		if (!$page.state?.showModal) {
 			if (modalShow) {
@@ -88,7 +90,8 @@
 <Button on:click={hideModal}>hide Modal</Button>
 <Button
 	on:click={() => {
-		console.log($page.state);
+		console.log('$page.state: ', $page.state);
+		console.log('modalShow: ', modalShow);
 	}}>Log state</Button
 >
 
