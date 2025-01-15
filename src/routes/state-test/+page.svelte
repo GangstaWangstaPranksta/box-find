@@ -47,7 +47,7 @@
 	$: {
 		//handles user browser back action
 		if (!$page.state?.showModal) {
-			//modalShow = false;
+			modalShow = false;
 		}
 	}
 
@@ -74,7 +74,6 @@
 	on:close={() => {
 		console.log('modal closed');
 		//hideModal();
-		history.back();
 	}}
 >
 	<p>Any unsaved changed will be discarded.</p>
