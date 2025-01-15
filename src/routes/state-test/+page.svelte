@@ -6,7 +6,6 @@
 	import { page } from '$app/stores';
 	import { replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { l } from 'vite/dist/node/types.d-aGj9QkWt';
 
 	let editBoxName = '';
 	let modalShow = false;
