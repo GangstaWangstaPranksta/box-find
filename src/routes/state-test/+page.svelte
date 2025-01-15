@@ -5,11 +5,14 @@
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { replaceState } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { l } from 'vite/dist/node/types.d-aGj9QkWt';
 
 	let editBoxName = '';
 	let modalShow = false;
 
 	function showModal() {
+		console.warn('showModal');
 		modalShow = true;
 		pushState('', {
 			showModal: true
@@ -17,29 +20,40 @@
 	}
 
 	function hideModal() {
-		replaceState('', {
+		console.error('hideModal');
+		logState();
+		/* replaceState('', {
 			showModal: false
-		});
-		modalShow = false;
+		}); */
+		history.back();
+		//modalShow = false;
 	}
 
 	function renameBox() {
 		//console.log('renameBox: ', editBoxName);
 	}
 
+	function logState() {
+		console.log('$page.state: ', $page.state);
+		console.log('modalShow: ', modalShow);
+	}
+
 	$: {
-		if (!modalShow) {
-			if ($page.state?.showModal) {
-				hideModal();
-			}
+		//handle when modal changes state of modalShow
+		if (!modalShow && browser && $page.state?.showModal) {
+			hideModal();
 		}
 	}
 
 	$: {
-		//handles page state update to false, updating modalShow
+		//handles user browser back action
 		if (!$page.state?.showModal) {
-			modalShow = false;
+			//modalShow = false;
 		}
+	}
+
+	function handleModalHide() {
+		if (modalShow) modalShow = false;
 	}
 </script>
 
@@ -57,6 +71,11 @@
 	on:click:button--secondary={hideModal}
 	on:click:button--primary={() => {
 		renameBox();
+	}}
+	on:close={() => {
+		console.log('modal closed');
+		//hideModal();
+		history.back();
 	}}
 >
 	<p>Any unsaved changed will be discarded.</p>
@@ -77,12 +96,7 @@
 	}}>Opem Modal</Button
 >
 <Button on:click={hideModal}>hide Modal</Button>
-<Button
-	on:click={() => {
-		console.log('$page.state: ', $page.state);
-		console.log('modalShow: ', modalShow);
-	}}>Log state</Button
->
+<Button on:click={logState}>Log state</Button>
 
 {#if modalShow}
 	<p style="font-size:3em">modalshow</p>
