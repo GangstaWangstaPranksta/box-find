@@ -2,16 +2,14 @@
 	import 'carbon-components-svelte/css/g80.css';
 	import { Button, Modal, TextInput } from 'carbon-components-svelte';
 
-	import { pushState } from '$app/navigation';
+	import { pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 
 	let editBoxName = '';
 	let modalShow = false;
 
 	function showModal() {
-		console.warn('showModal');
 		modalShow = true;
 		pushState('', {
 			showModal: true
@@ -19,18 +17,11 @@
 	}
 
 	function hideModal() {
-		console.error('hideModal');
-		logState();
 		history.back();
 	}
 
 	function renameBox() {
 		//console.log('renameBox: ', editBoxName);
-	}
-
-	function logState() {
-		console.log('$page.state: ', $page.state);
-		console.log('modalShow: ', modalShow);
 	}
 
 	$: {
@@ -76,5 +67,3 @@
 		showModal();
 	}}>Opem Modal</Button
 >
-<Button on:click={hideModal}>hide Modal</Button>
-<Button on:click={logState}>Log state</Button>
