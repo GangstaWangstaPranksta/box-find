@@ -21,11 +21,7 @@
 	function hideModal() {
 		console.error('hideModal');
 		logState();
-		/* replaceState('', {
-			showModal: false
-		}); */
 		history.back();
-		//modalShow = false;
 	}
 
 	function renameBox() {
@@ -50,16 +46,7 @@
 			modalShow = false;
 		}
 	}
-
-	function handleModalHide() {
-		if (modalShow) modalShow = false;
-	}
 </script>
-
-<pre>
-    {JSON.stringify($page, null, 2)}
-    {modalShow}
-</pre>
 
 <Modal
 	bind:open={modalShow}
@@ -70,10 +57,6 @@
 	on:click:button--secondary={hideModal}
 	on:click:button--primary={() => {
 		renameBox();
-	}}
-	on:close={() => {
-		console.log('modal closed');
-		//hideModal();
 	}}
 >
 	<p>Any unsaved changed will be discarded.</p>
@@ -95,11 +78,3 @@
 >
 <Button on:click={hideModal}>hide Modal</Button>
 <Button on:click={logState}>Log state</Button>
-
-{#if modalShow}
-	<p style="font-size:3em">modalshow</p>
-{/if}
-
-{#if $page.state.showModal}
-	<p style="font-size:3em">page state show</p>
-{/if}
