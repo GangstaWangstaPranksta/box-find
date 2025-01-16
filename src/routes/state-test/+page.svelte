@@ -61,9 +61,6 @@
 
 <Button
 	on:click={() => {
-		replaceState('', {
-			showModal: false
-		});
 		showModal();
 	}}>Opem Modal</Button
 >
