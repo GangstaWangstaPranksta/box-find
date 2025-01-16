@@ -234,26 +234,34 @@
 		history.back();
 	}
 
+	//handle when modal changes state of modalShow
 	$: {
-		//handle when modal changes state of modalShow
 		if (!cancelModalOpen && browser && $page.state?.cancelModal) {
-			closeModal();
-		}
-		if (!deleteModalOpen && browser && $page.state?.deleteModal) {
-			closeModal();
-		}
-		if (!editModalOpen && browser && $page.state?.editModal) {
 			closeModal();
 		}
 	}
 	$: {
-		//handles user browser back action
+		if (!deleteModalOpen && browser && $page.state?.deleteModal) {
+			closeModal();
+		}
+	}
+	$: {
+		if (!editModalOpen && browser && $page.state?.editModal) {
+			closeModal();
+		}
+	}
+	//handles user browser back action
+	$: {
 		if (!$page.state?.cancelModal) {
 			cancelModalOpen = false;
 		}
+	}
+	$: {
 		if (!$page.state?.deleteModal) {
 			deleteModalOpen = false;
 		}
+	}
+	$: {
 		if (!$page.state?.editModal) {
 			editModalOpen = false;
 		}
