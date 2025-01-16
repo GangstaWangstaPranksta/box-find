@@ -1,5 +1,5 @@
 <script>
-	import { goto, replaceState } from '$app/navigation';
+	import { goto, pushState, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -29,8 +29,6 @@
 	export let data;
 	let pageNum = 1;
 	let lastPage = data.lastPage;
-	let showModal = false;
-	let newBoxID = '';
 
 	let searchQuery = '';
 	let searchedQuery = '';
@@ -109,10 +107,10 @@
 		if (res.status != 409 && resJson.id == id) {
 			goto(`/box/${encodeURIComponent(id)}`);
 		} else if (res.status == 409) {
-			showModal = false;
+			modalShow = false;
 			addToast('error', 'Error creating a new box', `A box with id: "${id}" already exists.`);
 		} else {
-			showModal = false;
+			modalShow = false;
 			addToast('error', 'Error creating a new box', `An unknown error occurred.`);
 		}
 	};
@@ -130,6 +128,34 @@
 	const composeImageAltText = (id) => {
 		return `Picture of "${id}'s" contents`;
 	};
+
+	// modal handling
+
+	let modalShow = false;
+	let newBoxID = '';
+
+	function showModal() {
+		modalShow = true;
+		pushState('', {
+			showModal: true
+		});
+	}
+	function hideModal() {
+		history.back();
+	}
+
+	$: {
+		//handle when modal changes state of modalShow
+		if (!modalShow && browser && $page.state?.showModal) {
+			hideModal();
+		}
+	}
+	$: {
+		//handles user browser back action
+		if (!$page.state?.showModal) {
+			modalShow = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -144,13 +170,7 @@
 		</span>
 
 		<span class="newBox">
-			<Button
-				on:click={() => {
-					showModal = true;
-				}}
-				iconDescription="New Box"
-				icon={Add}
-			/>
+			<Button on:click={showModal} iconDescription="New Box" icon={Add} />
 		</span>
 	</div>
 
@@ -219,12 +239,12 @@
 </div>
 
 <Modal
-	bind:open={showModal}
+	bind:open={modalShow}
 	modalHeading="Create a new Box"
 	primaryButtonText="Create Box"
 	selectorPrimaryFocus="#box-name"
 	secondaryButtonText="Cancel"
-	on:click:button--secondary={() => (showModal = false)((newBoxID = ''))}
+	on:click:button--secondary={() => (modalShow = false)((newBoxID = ''))}
 	on:click:button--primary={() => {
 		if (newBoxID != '') {
 			newBox(newBoxID);
