@@ -161,7 +161,6 @@
 		if ((await res.json()) == `${id} box renamed to ${editBoxName}` && res.ok) {
 			goto(`/box/${editBoxName}`);
 			id = editBoxName;
-			editModalOpen = false;
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
