@@ -1,5 +1,7 @@
 <script>
-	import { goto, invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
+	import { goto, invalidateAll, pushState } from '$app/navigation';
 	import { fade } from 'svelte/transition';
 	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
@@ -20,7 +22,6 @@
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 
 	import { MasonryGrid } from '@egjs/svelte-grid';
-	import { browser } from '$app/environment';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -33,10 +34,6 @@
 	let id = data.box;
 	let contents = data.contents;
 	let initContents = data.contents;
-	let cancelModalOpen = false;
-	let editModalOpen = false;
-	let editBoxName = id;
-	let deleteModalOpen = false;
 	let toasts = [];
 	let photos = data.images;
 	let delPhotos = [];
@@ -54,13 +51,6 @@
 		};
 	};
 
-	const openCancelModal = () => {
-		if (initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) {
-			cancelModalOpen = true;
-		} else {
-			if (browser) window.history.back();
-		}
-	};
 	const save = async () => {
 		let contentsSave = { acknowledged: false, modifiedCount: 0 };
 		let imgSave = '';
@@ -171,7 +161,6 @@
 		if ((await res.json()) == `${id} box renamed to ${editBoxName}` && res.ok) {
 			goto(`/box/${editBoxName}`);
 			id = editBoxName;
-			editModalOpen = false;
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
@@ -210,6 +199,72 @@
 			return toast;
 		});
 	};
+
+	// modal management
+	let cancelModalOpen = false;
+	let deleteModalOpen = false;
+	let editModalOpen = false;
+	let editBoxName = id;
+
+	function openCancelModal() {
+		if (initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) {
+			cancelModalOpen = true;
+			pushState('', {
+				cancelModal: true
+			});
+		} else {
+			if (browser) window.history.back();
+		}
+	}
+	function openDeleteModal() {
+		deleteModalOpen = true;
+		pushState('', {
+			deleteModal: true
+		});
+	}
+	function openEditModal() {
+		editModalOpen = true;
+		pushState('', {
+			editModal: true
+		});
+	}
+
+	function closeModal() {
+		history.back();
+	}
+
+	//handle when modal changes state of modalShow
+	$: {
+		if (!cancelModalOpen && browser && $page.state?.cancelModal) {
+			closeModal();
+		}
+	}
+	$: {
+		if (!deleteModalOpen && browser && $page.state?.deleteModal) {
+			closeModal();
+		}
+	}
+	$: {
+		if (!editModalOpen && browser && $page.state?.editModal) {
+			closeModal();
+		}
+	}
+	//handles user browser back action
+	$: {
+		if (!$page.state?.cancelModal) {
+			cancelModalOpen = false;
+		}
+	}
+	$: {
+		if (!$page.state?.deleteModal) {
+			deleteModalOpen = false;
+		}
+	}
+	$: {
+		if (!$page.state?.editModal) {
+			editModalOpen = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -221,21 +276,12 @@
 		<div class="header">
 			<h1>Box: {data.box}</h1>
 			<div class="boxEditButtons">
-				<Button
-					kind="tertiary"
-					iconDescription="Edit"
-					icon={Edit}
-					on:click={() => {
-						editModalOpen = true;
-					}}
-				/>
+				<Button kind="tertiary" iconDescription="Edit" icon={Edit} on:click={openEditModal} />
 				<Button
 					kind="danger-tertiary"
 					iconDescription="Delete"
 					icon={TrashCan}
-					on:click={() => {
-						deleteModalOpen = true;
-					}}
+					on:click={openDeleteModal}
 				/>
 			</div>
 		</div>

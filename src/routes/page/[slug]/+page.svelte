@@ -1,5 +1,5 @@
 <script>
-	import { goto, replaceState } from '$app/navigation';
+	import { goto, pushState, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
@@ -29,8 +29,6 @@
 	export let data;
 	let pageNum = data.page;
 	let lastPage = data.lastPage;
-	let showModal = false;
-	let newBoxID = '';
 
 	let searchQuery = '';
 	let searchedQuery = '';
@@ -129,6 +127,33 @@
 	const composeImageAltText = (id) => {
 		return `Picture of "${id}'s" contents`;
 	};
+
+	// modal handling
+	let modalShow = false;
+	let newBoxID = '';
+
+	function showModal() {
+		modalShow = true;
+		pushState('', {
+			showModal: true
+		});
+	}
+	function hideModal() {
+		history.back();
+	}
+
+	$: {
+		//handle when modal changes state of modalShow
+		if (!modalShow && browser && $page.state?.showModal) {
+			hideModal();
+		}
+	}
+	$: {
+		//handles user browser back action
+		if (!$page.state?.showModal) {
+			modalShow = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -140,13 +165,7 @@
 		<Search bind:value={searchQuery} />
 		<ProgressBar size="sm" kind="inline" {status} hideLabel="true" />
 		<span class="newBox">
-			<Button
-				on:click={() => {
-					showModal = true;
-				}}
-				iconDescription="New Box"
-				icon={Add}
-			/>
+			<Button on:click={showModal} iconDescription="New Box" icon={Add} />
 		</span>
 	</div>
 
@@ -215,12 +234,12 @@
 </div>
 
 <Modal
-	bind:open={showModal}
+	bind:open={modalShow}
 	modalHeading="Create a new Box"
 	primaryButtonText="Create Box"
 	selectorPrimaryFocus="#box-name"
 	secondaryButtonText="Cancel"
-	on:click:button--secondary={() => (showModal = false)}
+	on:click:button--secondary={() => (modalShow = false)}
 	on:click:button--primary={() => {
 		newBox(newBoxID);
 	}}
