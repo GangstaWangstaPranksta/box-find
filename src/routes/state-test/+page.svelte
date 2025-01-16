@@ -2,7 +2,7 @@
 	import 'carbon-components-svelte/css/g80.css';
 	import { Button, Modal, TextInput } from 'carbon-components-svelte';
 
-	import { pushState, replaceState } from '$app/navigation';
+	import { pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
 
