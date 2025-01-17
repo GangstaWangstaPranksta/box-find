@@ -10,13 +10,13 @@
 		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-node": "^5.2.11",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"carbon-preprocess-svelte": "^0.11.9",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"svelte": "^4.2.19",
+		"svelte-adapter-bun": "^0.5.2",
 		"vite": "^5.4.11"
 	},
 	"type": "module",
