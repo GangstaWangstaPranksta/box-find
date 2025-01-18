@@ -163,7 +163,7 @@
 </svelte:head>
 
 <div class="wrapper">
-	<div class="searchBar">
+	<div class="searchBar sticky">
 		<span>
 			<Search bind:value={searchQuery} />
 			<ProgressBar size="sm" kind="inline" {status} hideLabel="true" />
@@ -281,16 +281,23 @@
 		right: 15px;
 	}
 	.wrapper {
-		margin: 1.5em;
+		margin: 0 1.5em 1.5em 1.5em;
 	}
 	.searchBar {
 		display: flex;
-		margin-bottom: 1em;
+		padding-bottom: 1em;
+		padding-top: 1.5em;
 	}
 	.searchBar > :first-child {
 		flex-grow: 1;
 	}
 	.newBox {
-		margin-left: 1em;
+		padding-left: 1em;
+	}
+	.sticky {
+		position: sticky;
+		top: 0;
+		background-color: #393939;
+		z-index: 1;
 	}
 </style>
