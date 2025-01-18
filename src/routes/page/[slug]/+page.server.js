@@ -46,6 +46,11 @@ export async function load({ params }) {
 			.limit(10);
 
 		contents = await contentsCursor.toArray();
+		for (let i = 0; i < contents.length; i++) {
+			if (contents[i].images?.length > 5) {
+				contents[i].images = contents[i].images.slice(0, 5);
+			}
+		}
 	} finally {
 		// Ensures that the client will close when you finish/error
 		if (client) await client.close();
