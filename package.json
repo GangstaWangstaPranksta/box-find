@@ -6,6 +6,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check .",
 		"format": "prettier --plugin-search-dir . --write ."
 	},
@@ -17,6 +19,8 @@
 		"prettier-plugin-svelte": "^3.3.3",
 		"svelte": "^4.2.19",
 		"svelte-adapter-bun": "^0.5.2",
+		"svelte-check": "^4.1.4",
+		"typescript": "^5.7.3",
 		"vite": "^5.4.11"
 	},
 	"type": "module",
