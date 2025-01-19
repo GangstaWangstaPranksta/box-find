@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { goto, pushState, replaceState } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
