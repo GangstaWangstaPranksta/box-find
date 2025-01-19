@@ -18,7 +18,7 @@ const client = new MongoClient(uri, {
 	}
 });
 
-export const load = async ({}) => {
+export const load: PageLoad = async ({}) => {
 	let lastPage;
 	let contents;
 	try {
