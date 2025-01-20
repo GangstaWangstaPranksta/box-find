@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
 	}
 });
 
-export const POST = async ({ request }) => {
+export const POST: RequestHandler = async ({ request }) => {
 	const { id, contents } = await request.json();
 	let res;
 	try {
