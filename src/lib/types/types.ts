@@ -1,5 +1,5 @@
 export type boxData = {
-	id: string;
+	_id: string;
 	contents: string;
 	images: string[];
 	lastModified: Date;
