@@ -7,5 +7,5 @@ const boxSchema = new mongoose.Schema({
 	lastModified: { type: Date, required: true }
 });
 
-const Box = mongoose.model('Box', boxSchema);
+const Box = mongoose.models.Box || mongoose.model('Box', boxSchema);
 export default Box;
