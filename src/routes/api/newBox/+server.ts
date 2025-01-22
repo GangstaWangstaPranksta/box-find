@@ -1,6 +1,4 @@
 import { json } from '@sveltejs/kit';
-import { MongoClient, ServerApiVersion } from 'mongodb';
-import mongoose from 'mongoose';
 import Box from '$lib/models/box';
 import type { RequestHandler } from './$types';
 import dotenv from 'dotenv';
