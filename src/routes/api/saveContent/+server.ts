@@ -1,39 +1,25 @@
 import { json } from '@sveltejs/kit';
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import Box from '$lib/models/box';
+import connectDB from '$lib/db/connect';
 import type { RequestHandler } from './$types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-let uri;
-if (process.env.NODE_ENV !== 'production') {
-	uri = `mongodb+srv://${process.env.MONGO_URI}`;
-} else {
-	uri = `mongodb://${process.env.MONGO_URI}`;
-}
-
-const client = new MongoClient(uri, {
-	serverApi: {
-		version: ServerApiVersion.v1,
-		strict: true,
-		deprecationErrors: true
-	}
-});
-
 export const POST: RequestHandler = async ({ request }) => {
 	const { id, contents } = await request.json();
-	let res;
-	try {
-		// Connect the client to the server	(optional starting in v4.7)
-		await client.connect();
-		const collection = client.db('test-box-db').collection('boxes');
+	if (!id || !contents) {
+		return json({ error: 'Invalid request' }, { status: 400 });
+	}
+	await connectDB();
 
-		res = await collection.updateOne(
-			{ _id: id },
-			{ $set: { contents: contents, lastModified: Date.now() } }
-		);
-	} finally {
-		// Ensures that the client will close when you finish/error
-		await client.close();
+	const box = await Box.findById(id);
+	let res = json({ error: 'Unexpected Server Error' }, { status: 500 });
+	if (box) {
+		box.contents = contents;
+		box.lastModified = Date.now();
+		res = await box.save();
+	} else {
+		return json({ error: 'Box not found' }, { status: 404 });
 	}
 	return json(res);
 };
