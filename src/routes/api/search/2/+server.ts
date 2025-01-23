@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	//await all promises
 	let dbRes = [];
 	for (let box of res) {
-		dbRes.push(Box.findOne({ _id: box.item._id }, { projection: { images: 1 } }));
+		dbRes.push(Box.findOne({ _id: box.item._id }, 'images'));
 	}
 	await Promise.all(dbRes).then((imgs) => {
 		for (let i = 0; i < dbRes.length; i++) {
