@@ -3,7 +3,6 @@
 	import { page } from '$app/stores';
 	import { goto, invalidateAll, pushState } from '$app/navigation';
 	import { fade } from 'svelte/transition';
-	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
 	import {
 		TextArea,
@@ -23,6 +22,8 @@
 
 	import { MasonryGrid } from '@egjs/svelte-grid';
 
+	import type { toastData, toastType } from '$lib/types/types';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 
@@ -34,7 +35,7 @@
 	let id = data.box;
 	let contents = data.contents;
 	let initContents = data.contents;
-	let toasts = [];
+	let toasts: toastData[] = [];
 	let photos = data.images;
 	let delPhotos = [];
 	let newPhotos = [];
@@ -185,14 +186,11 @@
 		}
 	};
 
-	const addToast = (kind, title, subtitle) => {
-		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null }];
-		toasts = toasts.map((toast) => {
-			toast.timeoutId = setTimeout(() => {
-				toasts = toasts.filter((t) => t !== toast);
-			}, 10000); // 10 seconds
-			return toast;
-		});
+	const addToast = (type: toastType, title: string, subtitle: string) => {
+		toasts = [
+			...toasts,
+			{ type, title, subtitle, caption: new Date().toLocaleString(), timeout: 5000 }
+		];
 	};
 
 	// modal management
@@ -389,16 +387,13 @@
 		</Modal>
 		<div class="toasts">
 			{#each toasts as toast}
-				<div
-					class="toast"
-					in:fade={{ duration: 250, easing: quintIn }}
-					out:fade={{ duration: 500, easing: quintOut }}
-				>
+				<div class="toast" transition:fade>
 					<ToastNotification
-						kind={toast.kind}
+						kind={toast.type}
 						title={toast.title}
 						subtitle={toast.subtitle}
-						caption={toast.date.toLocaleString()}
+						caption={toast.caption}
+						timeout={toast.timeout}
 						lowContrast
 					/>
 				</div>
