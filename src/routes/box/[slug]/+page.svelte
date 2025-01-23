@@ -37,12 +37,12 @@
 	let initContents = data.contents;
 	let toasts: toastData[] = [];
 	let photos = data.images;
-	let delPhotos = [];
-	let newPhotos = [];
-	let fileinput;
+	let delPhotos: string[] = [];
+	let newPhotos: string[] = [];
+	let fileinput: HTMLInputElement;
 	let saving = false;
 
-	const onFileSelected = (e) => {
+	const onFileSelected = (e: Event) => {
 		let image = e.target.files[0];
 		let reader = new FileReader();
 		reader.readAsDataURL(image);
