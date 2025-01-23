@@ -6,6 +6,12 @@ export type boxData = {
 	__v: number;
 };
 
+export type boxDataLean = {
+	_id: string;
+	contents: string;
+	images: string[];
+};
+
 export type toastData = {
 	type: 'error' | 'info' | 'info-square' | 'success' | 'warning' | 'warning-alt';
 	title: string;
