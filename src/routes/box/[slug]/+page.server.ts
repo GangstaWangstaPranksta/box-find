@@ -10,13 +10,13 @@ export const load: PageServerLoad = async ({ params }) => {
 	await connectDB();
 
 	// Use .lean() to get a plain JavaScript object
-	const box: boxData = await Box.findOne({ _id: id }).lean().exec();
+	const box = await Box.findOne({ _id: id }).lean().exec();
 	const boxExist = box != null;
 
 	return {
-		box: boxExist ? box._id : null,
-		contents: boxExist ? box.contents : '',
-		images: boxExist ? box.images : [],
+		box: boxExist ? (box as boxData)._id : null,
+		contents: boxExist && !Array.isArray(box) ? (box as boxData).contents : '',
+		images: boxExist && !Array.isArray(box) ? (box as boxData).images : [],
 		boxExist: boxExist
 	};
 };
