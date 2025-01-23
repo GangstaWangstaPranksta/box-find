@@ -1,47 +1,30 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
-import type { PageLoad } from './$types';
+import Box from '$lib/models/box';
+import connectDB from '$lib/db/connect';
+import type { PageServerLoad } from './$types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-let uri;
-if (process.env.NODE_ENV !== 'production') {
-	uri = `mongodb+srv://${process.env.MONGO_URI}`;
-} else {
-	uri = `mongodb://${process.env.MONGO_URI}`;
-}
-
-const client = new MongoClient(uri, {
-	serverApi: {
-		version: ServerApiVersion.v1,
-		strict: true,
-		deprecationErrors: true
-	}
-});
-
-export const load: PageLoad = async ({}) => {
+export const load: PageServerLoad = async ({}) => {
 	let lastPage;
 	let contents;
-	try {
-		// Connect the client to the server	(optional starting in v4.7)
-		await client.connect();
-		const collection = client.db('test-box-db').collection('boxes');
 
-		lastPage = Math.ceil((await collection.countDocuments()) / 10);
+	await connectDB();
 
-		let contentsCursor = collection
-			.find({}, { sort: { lastModified: -1 }, projection: { images: 1, contents: 1 } })
-			.limit(10);
+	const count = await Box.countDocuments();
+	lastPage = Math.ceil(count / 10);
 
-		contents = await contentsCursor.toArray();
-		for (let i = 0; i < contents.length; i++) {
-			if (contents[i].images?.length > 5) {
-				contents[i].images = contents[i].images.slice(0, 5);
-			}
+	const boxes = await Box.find({}, 'images contents')
+		.sort({ lastModified: -1 })
+		.limit(10)
+		.lean()
+		.exec();
+
+	contents = boxes.map((box) => {
+		if (box.images.length > 5) {
+			box.images = box.images.slice(0, 5);
 		}
-	} finally {
-		// Ensures that the client will close when you finish/error
-		if (client) await client.close();
-	}
+		return box;
+	});
 
 	return {
 		contents: contents,
