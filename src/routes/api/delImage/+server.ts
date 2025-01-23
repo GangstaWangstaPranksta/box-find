@@ -8,15 +8,14 @@ dotenv.config();
 export const POST: RequestHandler = async ({ request }) => {
 	const { id, base64 } = await request.json();
 	await connectDB();
-	let res;
 	const box = await Box.findById(id);
 	if (box) {
 		box.images.pull(base64);
 		box.lastModified = Date.now();
-		res = await box.save();
+		await box.save();
 	} else {
 		return json({ error: 'Box not found' }, { status: 404 });
 	}
 
-	return json(res);
+	return json({ status: 'ok' });
 };

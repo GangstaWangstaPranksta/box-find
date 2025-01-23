@@ -23,16 +23,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const compressedBase64 = `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
 
-	let res;
 	await connectDB();
 	const box = await Box.findById(id);
 	if (box) {
 		box.images.push(compressedBase64);
 		box.lastModified = Date.now();
-		res = await box.save();
+		await box.save();
 	} else {
 		return json({ error: 'Box not found' }, { status: 404 });
 	}
 
-	return json(res);
+	return json({ status: 'ok' });
 };

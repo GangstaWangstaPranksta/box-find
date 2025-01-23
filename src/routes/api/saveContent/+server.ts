@@ -13,13 +13,12 @@ export const POST: RequestHandler = async ({ request }) => {
 	await connectDB();
 
 	const box = await Box.findById(id);
-	let res = json({ error: 'Unexpected Server Error' }, { status: 500 });
 	if (box) {
 		box.contents = contents;
 		box.lastModified = Date.now();
-		res = await box.save();
+		await box.save();
 	} else {
 		return json({ error: 'Box not found' }, { status: 404 });
 	}
-	return json(res);
+	return json({ status: 'ok' });
 };
