@@ -52,7 +52,7 @@
 	};
 
 	const save = async () => {
-		let contentsSave = { acknowledged: false, modifiedCount: 0 };
+		let contentsSave = false;
 		let imgSave = '';
 		let imgDel = '';
 		let error;
@@ -71,17 +71,14 @@
 					'Oops, something went wrong.',
 					`An error occured, status: ${res.status}.`
 				);
+			} else {
+				contentsSave = true;
+				initContents = contents;
 			}
-			contentsSave = await res.json();
-			if (contentsSave.acknowledged && contentsSave.modifiedCount == 1) initContents = contents;
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
-		if (
-			(contentsSave.acknowledged && contentsSave.modifiedCount == 1) ||
-			imgSave == 'saved' ||
-			imgDel == 'saved'
-		) {
+		if (contentsSave || imgSave == 'saved' || imgDel == 'saved') {
 			addToast('success', 'Success!', 'Changes have been saved.');
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${error}.`);
@@ -96,8 +93,7 @@
 				'content-type': 'application/json'
 			}
 		});
-		let data = await res.json();
-		if (res.ok && data.acknowledged && data.modifiedCount == 1) return true;
+		if (res.ok) return true;
 		else return res.status;
 	};
 	const saveImgs = async () => {
@@ -117,8 +113,7 @@
 				'content-type': 'application/json'
 			}
 		});
-		let data = await res.json();
-		if (res.ok && data.acknowledged && data.matchedCount == 1) return true;
+		if (res.ok) return true;
 		else return res.status;
 	};
 	const saveDelImg = async () => {
