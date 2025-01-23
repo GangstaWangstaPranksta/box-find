@@ -5,7 +5,12 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			cancelModal?: boolean;
+			editModal?: boolean;
+			deleteModal?: boolean;
+			showModal?: boolean;
+		}
 		// interface Platform {}
 	}
 }
