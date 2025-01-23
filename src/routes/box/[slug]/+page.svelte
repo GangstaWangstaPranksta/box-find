@@ -1,9 +1,8 @@
-<script>
+<script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto, invalidateAll, pushState } from '$app/navigation';
 	import { fade } from 'svelte/transition';
-	import { quintIn, quintOut } from 'svelte/easing';
 	import 'carbon-components-svelte/css/g80.css';
 	import {
 		TextArea,
@@ -23,6 +22,8 @@
 
 	import { MasonryGrid } from '@egjs/svelte-grid';
 
+	import type { toastData, toastType } from '$lib/types/types';
+
 	/** @type {import('./$types').PageData} */
 	export let data;
 
@@ -34,27 +35,34 @@
 	let id = data.box;
 	let contents = data.contents;
 	let initContents = data.contents;
-	let toasts = [];
+	let toasts: toastData[] = [];
 	let photos = data.images;
-	let delPhotos = [];
-	let newPhotos = [];
-	let fileinput;
+	let delPhotos: string[] = [];
+	let newPhotos: string[] = [];
+	let fileinput: HTMLInputElement;
 	let saving = false;
 
-	const onFileSelected = (e) => {
-		let image = e.target.files[0];
-		let reader = new FileReader();
-		reader.readAsDataURL(image);
-		reader.onload = (e) => {
-			photos = [...photos, e.target.result];
-			newPhotos = [...newPhotos, e.target.result];
-		};
+	const onFileSelected = (e: Event & { currentTarget: EventTarget & HTMLInputElement }) => {
+		const target = e.target as HTMLInputElement;
+
+		if (target.files && target.files.length > 0) {
+			const image = target.files[0];
+			const reader = new FileReader();
+
+			reader.readAsDataURL(image);
+			reader.onload = (event) => {
+				if (event.target && event.target.result) {
+					photos = [...photos, event.target.result as string];
+					newPhotos = [...newPhotos, event.target.result as string];
+				}
+			};
+		}
 	};
 
 	const save = async () => {
-		let contentsSave = { acknowledged: false, modifiedCount: 0 };
-		let imgSave = '';
-		let imgDel = '';
+		let contentsSave = false;
+		let imgSave: number | null = 0;
+		let imgDel: number | null = 0;
 		let error;
 		saving = true;
 		if (initContents != contents) {
@@ -71,24 +79,22 @@
 					'Oops, something went wrong.',
 					`An error occured, status: ${res.status}.`
 				);
+			} else {
+				contentsSave = true;
+				initContents = contents;
 			}
-			contentsSave = await res.json();
-			if (contentsSave.acknowledged && contentsSave.modifiedCount == 1) initContents = contents;
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
-		if (
-			(contentsSave.acknowledged && contentsSave.modifiedCount == 1) ||
-			imgSave == 'saved' ||
-			imgDel == 'saved'
-		) {
+		if (contentsSave || imgSave != null || imgDel != null) {
 			addToast('success', 'Success!', 'Changes have been saved.');
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${error}.`);
 		}
 		saving = false;
 	};
-	const uploadImg = async (base64) => {
+
+	const uploadImg = async (base64: string) => {
 		const res = await fetch('/api/saveImage', {
 			method: 'POST',
 			body: JSON.stringify({ id, base64 }),
@@ -96,20 +102,25 @@
 				'content-type': 'application/json'
 			}
 		});
-		let data = await res.json();
-		if (res.ok && data.acknowledged && data.modifiedCount == 1) return true;
+		if (res.ok) return true;
 		else return res.status;
 	};
 	const saveImgs = async () => {
 		let values = await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
 		newPhotos = [];
+
+		if (values.length === 0) {
+			return 0;
+		}
+
 		if (values.every((value) => value === true)) {
-			return 'saved';
+			return values.length;
 		} else {
-			return values.find((value) => value !== true);
+			const firstFailure = values.find((value) => value !== true);
+			return firstFailure !== undefined ? firstFailure : null;
 		}
 	};
-	const unUploadImg = async (base64) => {
+	const unUploadImg = async (base64: string) => {
 		const res = await fetch('/api/delImage', {
 			method: 'POST',
 			body: JSON.stringify({ id, base64 }),
@@ -117,21 +128,29 @@
 				'content-type': 'application/json'
 			}
 		});
-		let data = await res.json();
-		if (res.ok && data.acknowledged && data.matchedCount == 1) return true;
+		if (res.ok) return true;
 		else return res.status;
 	};
 	const saveDelImg = async () => {
 		if (delPhotos.length > 0) {
 			let values = await Promise.all(delPhotos.map((photo) => unUploadImg(photo)));
 			delPhotos = [];
+
+			if (values.length === 0) {
+				return 0;
+			}
+
 			if (values.every((value) => value === true)) {
-				return 'saved';
+				return values.length;
 			} else {
-				return values.find((value) => value !== true);
+				const firstFailure = values.find((value) => value !== true);
+				return firstFailure !== undefined ? firstFailure : null;
 			}
 		}
+
+		return 0;
 	};
+
 	const delBox = async () => {
 		const res = await fetch('/api/deleteBox', {
 			method: 'POST',
@@ -165,7 +184,7 @@
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
 	};
-	const splicePhoto = (index) => {
+	const splicePhoto = (index: number) => {
 		let isNewPhoto = false;
 		newPhotos = newPhotos.filter((photo) => {
 			photo !== photos[index];
@@ -190,14 +209,11 @@
 		}
 	};
 
-	const addToast = (kind, title, subtitle) => {
-		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null }];
-		toasts = toasts.map((toast) => {
-			toast.timeoutId = setTimeout(() => {
-				toasts = toasts.filter((t) => t !== toast);
-			}, 10000); // 10 seconds
-			return toast;
-		});
+	const addToast = (type: toastType, title: string, subtitle: string) => {
+		toasts = [
+			...toasts,
+			{ type, title, subtitle, caption: new Date().toLocaleString(), timeout: 5000 }
+		];
 	};
 
 	// modal management
@@ -295,7 +311,7 @@
 			</div>
 
 			<div class="images">
-				<Button icon={Camera} on:click={fileinput.click()} style="margin-bottom: 1em"
+				<Button icon={Camera} on:click={() => fileinput.click()} style="margin-bottom: 1em"
 					>Add Photo</Button
 				>
 				<!-- hidden input -->
@@ -394,16 +410,13 @@
 		</Modal>
 		<div class="toasts">
 			{#each toasts as toast}
-				<div
-					class="toast"
-					in:fade={{ duration: 250, easing: quintIn }}
-					out:fade={{ duration: 500, easing: quintOut }}
-				>
+				<div class="toast" transition:fade>
 					<ToastNotification
-						kind={toast.kind}
+						kind={toast.type}
 						title={toast.title}
 						subtitle={toast.subtitle}
-						caption={toast.date.toLocaleString()}
+						caption={toast.caption}
+						timeout={toast.timeout}
 						lowContrast
 					/>
 				</div>

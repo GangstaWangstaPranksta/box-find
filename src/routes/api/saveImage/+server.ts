@@ -1,0 +1,37 @@
+import { json } from '@sveltejs/kit';
+import Box from '$lib/models/box';
+import connectDB from '$lib/db/connect';
+import type { RequestHandler } from './$types';
+import dotenv from 'dotenv';
+import sharp from 'sharp';
+dotenv.config();
+
+export const POST: RequestHandler = async ({ request }) => {
+	const { id, base64 } = await request.json();
+	if (!id || !base64) {
+		return json({ error: 'Missing id or base64' }, { status: 400 });
+	}
+
+	const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+	const imageBuffer = Buffer.from(base64Data, 'base64');
+
+	const compressedBuffer = await sharp(imageBuffer)
+		.withMetadata()
+		.resize(6500, 6500, { fit: 'inside' })
+		.jpeg({ quality: 75 })
+		.toBuffer();
+
+	const compressedBase64 = `data:image/jpeg;base64,${compressedBuffer.toString('base64')}`;
+
+	await connectDB();
+	const box = await Box.findById(id);
+	if (box) {
+		box.images.push(compressedBase64);
+		box.lastModified = Date.now();
+		await box.save();
+	} else {
+		return json({ error: 'Box not found' }, { status: 404 });
+	}
+
+	return json({ status: 'ok' });
+};
