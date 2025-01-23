@@ -16,6 +16,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		images: [],
 		lastModified: Date.now()
 	});
-	res = json({ id: insertedDoc._id });
+	res = json({ id: insertedDoc._id }, { status: 201 });
 	return res;
 };
