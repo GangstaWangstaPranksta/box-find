@@ -21,3 +21,5 @@ export type toastData = {
 };
 
 export type toastType = toastData['type'];
+
+export type progressBarStatus = 'active' | 'finished' | 'error';
