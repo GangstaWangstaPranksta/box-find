@@ -67,7 +67,7 @@
 		saving = true;
 		if (initContents != contents) {
 			const res = await fetch('/api/saveContent', {
-				method: 'POST',
+				method: 'PATCH',
 				body: JSON.stringify({ id, contents }),
 				headers: {
 					'content-type': 'application/json'
@@ -96,7 +96,7 @@
 
 	const uploadImg = async (base64: string) => {
 		const res = await fetch('/api/saveImage', {
-			method: 'POST',
+			method: 'PATCH',
 			body: JSON.stringify({ id, base64 }),
 			headers: {
 				'content-type': 'application/json'
@@ -122,7 +122,7 @@
 	};
 	const unUploadImg = async (base64: string) => {
 		const res = await fetch('/api/delImage', {
-			method: 'POST',
+			method: 'PATCH',
 			body: JSON.stringify({ id, base64 }),
 			headers: {
 				'content-type': 'application/json'
@@ -153,7 +153,7 @@
 
 	const delBox = async () => {
 		const res = await fetch('/api/deleteBox', {
-			method: 'POST',
+			method: 'DELETE',
 			body: JSON.stringify({ id }),
 			headers: {
 				'content-type': 'application/json'
@@ -171,7 +171,7 @@
 	};
 	const renameBox = async () => {
 		const res = await fetch('/api/renameBox', {
-			method: 'POST',
+			method: 'PATCH',
 			body: JSON.stringify({ id, editBoxName }),
 			headers: {
 				'content-type': 'application/json'

@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from '$lib/db/connect';
 dotenv.config();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const DELETE: RequestHandler = async ({ request }) => {
 	const { id } = await request.json();
 	await connectDB();
 	try {

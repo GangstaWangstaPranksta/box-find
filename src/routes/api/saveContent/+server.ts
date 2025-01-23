@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, contents } = await request.json();
 	if (!id || !contents) {
 		return json({ error: 'Invalid request' }, { status: 400 });

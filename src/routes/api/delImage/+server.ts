@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, base64 } = await request.json();
 	await connectDB();
 	const box = await Box.findById(id);

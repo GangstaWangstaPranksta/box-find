@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, editBoxName } = await request.json();
 	if (!id || !editBoxName) {
 		return json({ error: 'Missing required fields' }, { status: 400 });

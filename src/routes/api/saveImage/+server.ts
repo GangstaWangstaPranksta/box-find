@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import sharp from 'sharp';
 dotenv.config();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, base64 } = await request.json();
 	if (!id || !base64) {
 		return json({ error: 'Missing id or base64' }, { status: 400 });
