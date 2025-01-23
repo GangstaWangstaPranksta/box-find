@@ -19,6 +19,8 @@
 	} from 'carbon-components-svelte';
 	import Add from 'carbon-icons-svelte/lib/Add.svelte';
 	import { MasonryGrid } from '@egjs/svelte-grid';
+	import type { boxDataLean, progressBarStatus, toastData, toastType } from '$lib/types/types';
+	import type { FuzzyFilterResult } from 'fuzzbunny';
 
 	const align = 'start';
 	const column = 0;
@@ -32,16 +34,16 @@
 
 	let searchQuery = '';
 	let searchedQuery = '';
-	let results = [];
+	let results: FuzzyFilterResult<boxDataLean>[] = [];
 	let fromEmptySearch = true;
 	let searching = false;
-	let status = 'finished';
+	let status: progressBarStatus = 'finished';
 
 	//search stuff
 
 	let oldSearchQuery = searchQuery;
 
-	let toasts = [];
+	let toasts: toastData[] = [];
 
 	$: {
 		if (searchQuery !== oldSearchQuery) {
@@ -71,7 +73,7 @@
 	//if query is in url, set searchQuery to that
 	onMount(() => {
 		if ($page.url.searchParams.has('query')) {
-			searchQuery = $page.url.searchParams.get('query');
+			searchQuery = $page.url.searchParams.get('query') || '';
 			searching = true;
 			status = 'active';
 			(async () => {
@@ -93,7 +95,7 @@
 		}
 	}
 
-	const newBox = async (id) => {
+	const newBox = async (id: string) => {
 		const res = await fetch('/api/newBox', {
 			method: 'POST',
 			body: JSON.stringify({ id }),
@@ -106,25 +108,22 @@
 		if (res.status != 409 && resJson.id == id) {
 			goto(`/box/${encodeURIComponent(id)}`);
 		} else if (res.status == 409) {
-			showModal = false;
+			modalShow = false;
 			addToast('error', 'Error creating a new box', `A box with id: "${id}" already exists.`);
 		} else {
-			showModal = false;
+			modalShow = false;
 			addToast('error', 'Error creating a new box', 'An unknown error has occurred.');
 		}
 	};
 
-	const addToast = (kind, title, subtitle) => {
-		toasts = [...toasts, { kind, title, subtitle, date: new Date(), timeoutId: null }];
-		toasts = toasts.map((toast) => {
-			toast.timeoutId = setTimeout(() => {
-				toasts = toasts.filter((t) => t !== toast);
-			}, 10000); // 10 seconds
-			return toast;
-		});
+	const addToast = (type: toastType, title: string, subtitle: string) => {
+		toasts = [
+			...toasts,
+			{ type, title, subtitle, caption: new Date().toLocaleString(), timeout: 5000 }
+		];
 	};
 
-	const composeImageAltText = (id) => {
+	const composeImageAltText = (id: string) => {
 		return `Picture of "${id}'s" contents`;
 	};
 
@@ -163,7 +162,7 @@
 <div class="wrapper">
 	<div class="searchBar sticky">
 		<Search bind:value={searchQuery} />
-		<ProgressBar size="sm" kind="inline" {status} hideLabel="true" />
+		<ProgressBar size="sm" kind="inline" {status} hideLabel={true} />
 		<span class="newBox">
 			<Button on:click={showModal} iconDescription="New Box" icon={Add} />
 		</span>
@@ -255,10 +254,10 @@
 			out:fade={{ duration: 500, easing: quintOut }}
 		>
 			<ToastNotification
-				kind={toast.kind}
+				kind={toast.type}
 				title={toast.title}
 				subtitle={toast.subtitle}
-				caption={toast.date.toLocaleString()}
+				caption={toast.caption}
 				lowContrast
 			/>
 		</div>

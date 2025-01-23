@@ -42,20 +42,27 @@
 	let fileinput: HTMLInputElement;
 	let saving = false;
 
-	const onFileSelected = (e: Event) => {
-		let image = e.target.files[0];
-		let reader = new FileReader();
-		reader.readAsDataURL(image);
-		reader.onload = (e) => {
-			photos = [...photos, e.target.result];
-			newPhotos = [...newPhotos, e.target.result];
-		};
+	const onFileSelected = (e: Event & { currentTarget: EventTarget & HTMLInputElement }) => {
+		const target = e.target as HTMLInputElement;
+
+		if (target.files && target.files.length > 0) {
+			const image = target.files[0];
+			const reader = new FileReader();
+
+			reader.readAsDataURL(image);
+			reader.onload = (event) => {
+				if (event.target && event.target.result) {
+					photos = [...photos, event.target.result as string];
+					newPhotos = [...newPhotos, event.target.result as string];
+				}
+			};
+		}
 	};
 
 	const save = async () => {
 		let contentsSave = false;
-		let imgSave = '';
-		let imgDel = '';
+		let imgSave: number | null = 0;
+		let imgDel: number | null = 0;
 		let error;
 		saving = true;
 		if (initContents != contents) {
@@ -79,14 +86,15 @@
 		}
 		if (newPhotos.length > 0) imgSave = await saveImgs();
 		if (delPhotos.length > 0) imgDel = await saveDelImg();
-		if (contentsSave || imgSave == 'saved' || imgDel == 'saved') {
+		if (contentsSave || imgSave != null || imgDel != null) {
 			addToast('success', 'Success!', 'Changes have been saved.');
 		} else {
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${error}.`);
 		}
 		saving = false;
 	};
-	const uploadImg = async (base64) => {
+
+	const uploadImg = async (base64: string) => {
 		const res = await fetch('/api/saveImage', {
 			method: 'POST',
 			body: JSON.stringify({ id, base64 }),
@@ -100,13 +108,19 @@
 	const saveImgs = async () => {
 		let values = await Promise.all(newPhotos.map((photo) => uploadImg(photo)));
 		newPhotos = [];
+
+		if (values.length === 0) {
+			return 0;
+		}
+
 		if (values.every((value) => value === true)) {
-			return 'saved';
+			return values.length;
 		} else {
-			return values.find((value) => value !== true);
+			const firstFailure = values.find((value) => value !== true);
+			return firstFailure !== undefined ? firstFailure : null;
 		}
 	};
-	const unUploadImg = async (base64) => {
+	const unUploadImg = async (base64: string) => {
 		const res = await fetch('/api/delImage', {
 			method: 'POST',
 			body: JSON.stringify({ id, base64 }),
@@ -121,13 +135,22 @@
 		if (delPhotos.length > 0) {
 			let values = await Promise.all(delPhotos.map((photo) => unUploadImg(photo)));
 			delPhotos = [];
+
+			if (values.length === 0) {
+				return 0;
+			}
+
 			if (values.every((value) => value === true)) {
-				return 'saved';
+				return values.length;
 			} else {
-				return values.find((value) => value !== true);
+				const firstFailure = values.find((value) => value !== true);
+				return firstFailure !== undefined ? firstFailure : null;
 			}
 		}
+
+		return 0;
 	};
+
 	const delBox = async () => {
 		const res = await fetch('/api/deleteBox', {
 			method: 'POST',
@@ -161,7 +184,7 @@
 			addToast('error', 'Oops, something went wrong.', `An error occured, status: ${res.status}.`);
 		}
 	};
-	const splicePhoto = (index) => {
+	const splicePhoto = (index: number) => {
 		let isNewPhoto = false;
 		newPhotos = newPhotos.filter((photo) => {
 			photo !== photos[index];
@@ -288,7 +311,7 @@
 			</div>
 
 			<div class="images">
-				<Button icon={Camera} on:click={fileinput.click()} style="margin-bottom: 1em"
+				<Button icon={Camera} on:click={() => fileinput.click()} style="margin-bottom: 1em"
 					>Add Photo</Button
 				>
 				<!-- hidden input -->
