@@ -177,7 +177,8 @@
 				'content-type': 'application/json'
 			}
 		});
-		if ((await res.json()) == `${id} box renamed to ${editBoxName}` && res.ok) {
+		const resJson = await res.json();
+		if (resJson?.newID == editBoxName && res.ok) {
 			goto(`/box/${editBoxName}`);
 			id = editBoxName;
 		} else {

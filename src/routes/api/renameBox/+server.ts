@@ -27,5 +27,5 @@ export const PATCH: RequestHandler = async ({ request }) => {
 	});
 	await Box.findByIdAndDelete({ _id: id });
 
-	return json(`${id} box renamed to ${newBox._id}`);
+	return json({ newID: newBox._id }, { status: 202 });
 };
