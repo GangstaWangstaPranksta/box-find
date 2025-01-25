@@ -6,8 +6,8 @@ import connectDB from '$lib/db/connect';
 dotenv.config();
 
 export const POST: RequestHandler = async ({ request }) => {
-	await connectDB();
 	const { id } = await request.json();
+	await connectDB();
 	let res = json({ error: 'Unexpected Server Error' }, { status: 500 });
 
 	const insertedDoc = await Box.create({
