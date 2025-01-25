@@ -7,15 +7,22 @@ dotenv.config();
 
 export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, base64 } = await request.json();
-	await connectDB();
-	const box = await Box.findById(id);
-	if (box) {
-		box.images.pull(base64);
-		box.lastModified = Date.now();
-		await box.save();
-	} else {
-		return json({ error: 'Box not found' }, { status: 404 });
-	}
+	try {
+		await connectDB();
+		const box = await Box.findById(id);
+		if (box) {
+			box.images.pull(base64);
+			box.lastModified = Date.now();
+			await box.save();
+		} else {
+			return json({ error: 'Box not found' }, { status: 404 });
+		}
 
-	return json({ status: 'ok' });
+		return json({ status: 'ok' });
+	} catch (e) {
+		return json(
+			{ error: 'Unexpected Server Error', details: (e as Error).message },
+			{ status: 500 }
+		);
+	}
 };
