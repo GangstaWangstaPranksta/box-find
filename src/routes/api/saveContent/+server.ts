@@ -10,15 +10,22 @@ export const PATCH: RequestHandler = async ({ request }) => {
 	if (!id || !contents) {
 		return json({ error: 'Invalid request' }, { status: 400 });
 	}
-	await connectDB();
+	try {
+		await connectDB();
 
-	const box = await Box.findById(id);
-	if (box) {
-		box.contents = contents;
-		box.lastModified = Date.now();
-		await box.save();
-	} else {
-		return json({ error: 'Box not found' }, { status: 404 });
+		const box = await Box.findById(id);
+		if (box) {
+			box.contents = contents;
+			box.lastModified = Date.now();
+			await box.save();
+		} else {
+			return json({ error: 'Box not found' }, { status: 404 });
+		}
+		return json({ status: 'ok' });
+	} catch (e) {
+		return json(
+			{ error: 'Unexpected Server Error', details: (e as Error).message },
+			{ status: 500 }
+		);
 	}
-	return json({ status: 'ok' });
 };
