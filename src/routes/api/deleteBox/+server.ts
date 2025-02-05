@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import Box from '$lib/models/box';
-import type { RequestHandler } from './$types';
 import connectDB from '$lib/db/connect';
+import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ request }) => {
 	const { id } = await request.json();
