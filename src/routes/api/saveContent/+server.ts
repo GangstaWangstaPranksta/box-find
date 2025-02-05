@@ -2,8 +2,6 @@ import { json } from '@sveltejs/kit';
 import Box from '$lib/models/box';
 import connectDB from '$lib/db/connect';
 import type { RequestHandler } from './$types';
-import dotenv from 'dotenv';
-dotenv.config();
 
 export const PATCH: RequestHandler = async ({ request }) => {
 	const { id, contents } = await request.json();
