@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterNavigate, goto, invalidateAll } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, goto, invalidateAll } from '$app/navigation';
 	import { Tooltip } from 'bits-ui';
 	import { tick } from 'svelte';
 	import { page } from '$app/stores';
@@ -39,6 +39,20 @@
 	let editingName = false;
 	let renaming = false;
 	let cameFromInventory = false;
+	let discardingChanges = false;
+
+	beforeNavigate((navigation) => {
+		if (navigation.type === 'popstate' && (cancelModalOpen || deleteModalOpen)) {
+			navigation.cancel();
+			cancelModalOpen = false;
+			deleteModalOpen = false;
+			return;
+		}
+		if (hasChanges && !discardingChanges && navigation.type === 'popstate') {
+			navigation.cancel();
+			cancelModalOpen = true;
+		}
+	});
 
 	afterNavigate(({ from }) => {
 		if (from?.route.id === '/' || from?.route.id === '/page/[slug]') {
@@ -212,6 +226,9 @@
 	}
 
 	function exitBox() {
+		discardingChanges = true;
+		cancelModalOpen = false;
+		deleteModalOpen = false;
 		if (cameFromInventory) window.history.back();
 		else goto('/', { replaceState: true });
 	}

@@ -31,6 +31,7 @@
 	let searching = false;
 	let searchTimer: number | undefined;
 	let searchRequest: AbortController | undefined;
+	let searchGeneration = 0;
 	let modalShow = false;
 	let newBoxID = '';
 	let creating = false;
@@ -64,6 +65,7 @@
 	}
 
 	function queueSearch(query: string) {
+		const generation = ++searchGeneration;
 		window.clearTimeout(searchTimer);
 		searchRequest?.abort();
 		const trimmed = query.trim();
@@ -76,23 +78,25 @@
 		}
 
 		searching = true;
-		searchTimer = window.setTimeout(() => runSearch(query), 180);
+		searchTimer = window.setTimeout(() => runSearch(query, generation), 180);
 	}
 
-	async function runSearch(query: string) {
+	async function runSearch(query: string, generation: number) {
 		searchRequest = new AbortController();
 		try {
 			const response = await fetch(`/api/search/2?query=${encodeURIComponent(query)}`, {
 				signal: searchRequest.signal
 			});
 			if (!response.ok) throw new Error(`Search returned ${response.status}`);
-			results = await response.json();
+			const nextResults = await response.json();
+			if (generation !== searchGeneration) return;
+			results = nextResults;
 			searchedQuery = query;
 		} catch (error) {
-			if (error instanceof DOMException && error.name === 'AbortError') return;
+			if (generation !== searchGeneration || searchRequest?.signal.aborted) return;
 			addToast('error', 'Search failed', 'Try the search again in a moment.');
 		} finally {
-			searching = false;
+			if (generation === searchGeneration) searching = false;
 		}
 	}
 
@@ -138,6 +142,7 @@
 	});
 
 	onDestroy(() => {
+		searchGeneration += 1;
 		if (searchTimer) clearTimeout(searchTimer);
 		searchRequest?.abort();
 	});
