@@ -1,6 +1,6 @@
 # Box Find
 
-A SvelteKit-based box storage organizer system using the IBM Carbon Components & Icon Library, sharp, uFuzzy, mongoDB, and @egjs/svelte-grid.
+A SvelteKit-based box storage organizer using shadcn-svelte, Tailwind CSS, sharp, fuzzbunny, and MongoDB.
 
 ## Deployment
 

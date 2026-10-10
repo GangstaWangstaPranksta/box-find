@@ -1,66 +1,101 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+	import { afterNavigate, beforeNavigate, goto, invalidateAll } from '$app/navigation';
+	import { Tooltip } from 'bits-ui';
+	import { tick } from 'svelte';
 	import { page } from '$app/stores';
-	import { goto, invalidateAll, pushState } from '$app/navigation';
-	import { fade } from 'svelte/transition';
-	import 'carbon-components-svelte/css/g80.css';
-	import {
-		TextArea,
-		Button,
-		Modal,
-		ToastNotification,
-		TextInput,
-		InlineLoading
-	} from 'carbon-components-svelte';
-	import Save from 'carbon-icons-svelte/lib/Save.svelte';
-	import Exit from 'carbon-icons-svelte/lib/Exit.svelte';
-	import Edit from 'carbon-icons-svelte/lib/Edit.svelte';
-	import TrashCan from 'carbon-icons-svelte/lib/TrashCan.svelte';
-	import Camera from 'carbon-icons-svelte/lib/Camera.svelte';
-	import Home from 'carbon-icons-svelte/lib/Home.svelte';
-	import Add from 'carbon-icons-svelte/lib/Add.svelte';
-
-	import { MasonryGrid } from '@egjs/svelte-grid';
-
-	import type { toastData, toastType } from '$lib/types/types';
+	import ArrowLeft from 'svelte-radix/ArrowLeft.svelte';
+	import Camera from 'svelte-radix/Camera.svelte';
+	import Check from 'svelte-radix/Check.svelte';
+	import Home from 'svelte-radix/Home.svelte';
+	import Pencil1 from 'svelte-radix/Pencil1.svelte';
+	import Plus from 'svelte-radix/Plus.svelte';
+	import Reload from 'svelte-radix/Reload.svelte';
+	import Trash from 'svelte-radix/Trash.svelte';
+	import ToastStack from '$lib/components/ToastStack.svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import MasonryGrid from '$lib/components/MasonryGrid.svelte';
+	import { Input } from '$lib/components/ui/input';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import { Label } from '$lib/components/ui/label';
 	import { saveBoxChanges } from '$lib/save-workflow';
+	import type { toastData, toastType } from '$lib/types/types';
+	import type { PageData } from './$types';
 
-	/** @type {import('./$types').PageData} */
-	export let data;
+	export let data: PageData;
 
-	const align = 'start';
-	const column = 0;
-	const gap = 16;
-	const defaultDirection = 'end';
-
-	let id = data.box;
+	let id: string = data.box ?? $page.params.slug ?? '';
 	let contents = data.contents;
-	let initContents = data.contents;
-	let toasts: toastData[] = [];
-	let photos = data.images;
-	let delPhotos: string[] = [];
+	let initialContents = data.contents;
+	let photos: string[] = data.images;
+	let deletedPhotos: string[] = [];
 	let newPhotos: string[] = [];
-	let fileinput: HTMLInputElement;
+	let fileInput: HTMLInputElement;
 	let saving = false;
+	let toasts: toastData[] = [];
 
-	const onFileSelected = (e: Event & { currentTarget: EventTarget & HTMLInputElement }) => {
-		const target = e.target as HTMLInputElement;
+	let cancelModalOpen = false;
+	let deleteModalOpen = false;
+	let editingName = false;
+	let renaming = false;
+	let cameFromInventory = false;
+	let discardingChanges = false;
 
-		if (target.files && target.files.length > 0) {
-			const image = target.files[0];
-			const reader = new FileReader();
-
-			reader.readAsDataURL(image);
-			reader.onload = (event) => {
-				if (event.target && event.target.result) {
-					photos = [...photos, event.target.result as string];
-					newPhotos = [...newPhotos, event.target.result as string];
-				}
-			};
+	beforeNavigate((navigation) => {
+		if (navigation.type === 'popstate' && (cancelModalOpen || deleteModalOpen)) {
+			navigation.cancel();
+			cancelModalOpen = false;
+			deleteModalOpen = false;
+			return;
 		}
-	};
+		if (hasChanges && !discardingChanges && navigation.type === 'popstate') {
+			navigation.cancel();
+			cancelModalOpen = true;
+		}
+	});
 
-	const save = async () => {
+	afterNavigate(({ from }) => {
+		if (from?.route.id === '/' || from?.route.id === '/page/[slug]') {
+			cameFromInventory = true;
+		}
+	});
+	let nameInput: HTMLInputElement;
+	let nameButton: HTMLButtonElement;
+	let editBoxName: string = id;
+
+	$: hasChanges = initialContents !== contents || newPhotos.length > 0 || deletedPhotos.length > 0;
+
+	function addToast(type: toastType, title: string, subtitle: string) {
+		toasts = [...toasts, { type, title, subtitle, caption: '', timeout: 5000 }];
+	}
+
+	function selectPhoto(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+		const image = event.currentTarget.files?.[0];
+		if (!image) return;
+
+		const reader = new FileReader();
+		reader.readAsDataURL(image);
+		reader.onload = (loadEvent) => {
+			const photo = loadEvent.target?.result;
+			if (typeof photo !== 'string') return;
+			photos = [...photos, photo];
+			newPhotos = [...newPhotos, photo];
+			fileInput.value = '';
+		};
+	}
+
+	function removePhoto(index: number) {
+		const photo = photos[index];
+		if (newPhotos.includes(photo)) {
+			newPhotos = newPhotos.filter((candidate) => candidate !== photo);
+		} else {
+			deletedPhotos = [...deletedPhotos, photo];
+		}
+		photos = photos.filter((_, photoIndex) => photoIndex !== index);
+	}
+
+	async function save() {
+		if (!hasChanges || saving) return;
 		if (data.demoMode) {
 			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
 			return;
@@ -71,395 +106,468 @@
 			const result = await saveBoxChanges({
 				id,
 				contents,
-				contentsChanged: initContents !== contents,
+				contentsChanged: initialContents !== contents,
 				newPhotos,
-				delPhotos
+				delPhotos: deletedPhotos
 			});
 
-			if (result.contentsSaved) initContents = contents;
+			if (result.contentsSaved) initialContents = contents;
 			newPhotos = result.remainingUploads;
-			delPhotos = result.remainingDeletions;
+			deletedPhotos = result.remainingDeletions;
 
 			if (result.outcome === 'success') {
-				addToast('success', 'Success!', 'Changes have been saved.');
+				addToast('success', 'Changes saved', `Box “${id}” is up to date.`);
 			} else if (result.outcome === 'partial') {
 				addToast(
 					'warning',
-					'Some changes were not saved.',
+					'Some changes were not saved',
 					`${result.succeeded} of ${result.attempted} changes saved. ${result.failures.map(({ message }) => message).join('; ')}`
 				);
 			} else if (result.outcome === 'failure') {
 				addToast(
 					'error',
-					'Changes were not saved.',
+					'Changes were not saved',
 					result.failures.map(({ message }) => message).join('; ')
 				);
-			} else {
-				addToast('info', 'No changes to save.', 'Everything is already up to date.');
 			}
 		} finally {
 			saving = false;
 		}
-	};
+	}
 
-	const delBox = async () => {
+	async function deleteBox() {
 		if (data.demoMode) {
 			deleteModalOpen = false;
 			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
 			return;
 		}
 
-		const res = await fetch('/api/deleteBox', {
+		const response = await fetch('/api/deleteBox', {
 			method: 'DELETE',
 			body: JSON.stringify({ id }),
-			headers: {
-				'content-type': 'application/json'
-			}
+			headers: { 'content-type': 'application/json' }
 		});
-		const resJson = await res.json();
-		if (res.ok && resJson.status == 'ok') {
-			addToast('success', 'Box Deleted.', `${id} box deleted.`);
-			goto(`/`);
-		} else if (res.status == 404) {
-			addToast('error', 'Box not found.', `Box with id: ${id} was not found.`);
+		const responseData = await response.json();
+		if (response.ok && responseData.status === 'ok') {
+			await goto('/');
+		} else if (response.status === 404) {
+			deleteModalOpen = false;
+			addToast('error', 'Box not found', `Box “${id}” was not found.`);
 		} else {
-			addToast('error', 'Oops, something went wrong.', `An error occurred. ${resJson.error}`);
+			deleteModalOpen = false;
+			addToast('error', 'Could not delete box', responseData.error || 'Try again in a moment.');
 		}
-	};
-	const renameBox = async () => {
-		if (data.demoMode) {
-			editModalOpen = false;
-			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
+	}
+
+	async function renameBox() {
+		if (!editingName || renaming) return;
+		if (hasChanges) {
+			addToast(
+				'warning',
+				'Save changes first',
+				'Save your content and photo changes before renaming.'
+			);
+			await cancelRenaming();
 			return;
 		}
-
-		const res = await fetch('/api/renameBox', {
-			method: 'PATCH',
-			body: JSON.stringify({ id, editBoxName }),
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
-		const resJson = await res.json();
-		if (resJson?.newID == editBoxName && res.ok) {
-			goto(`/box/${editBoxName}`);
-			id = editBoxName;
-		} else {
-			addToast('error', 'Oops, something went wrong.', `An error occurred, status: ${res.status}.`);
+		const newID = editBoxName.trim();
+		if (!newID || newID === id) {
+			await cancelRenaming();
+			return;
 		}
-	};
-	const splicePhoto = (index: number) => {
-		const removedPhoto = photos[index];
-		const newPhotoIndex = newPhotos.indexOf(removedPhoto);
-
-		if (newPhotoIndex >= 0) {
-			newPhotos = newPhotos.filter((_, photoIndex) => photoIndex !== newPhotoIndex);
-		} else if (!delPhotos.includes(removedPhoto)) {
-			delPhotos = [...delPhotos, removedPhoto];
-		}
-		photos = photos.filter((_: string, photoIndex: number) => photoIndex !== index);
-	};
-	const newBox = async () => {
 		if (data.demoMode) {
 			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
 			return;
 		}
+		renaming = true;
+		try {
+			const response = await fetch('/api/renameBox', {
+				method: 'PATCH',
+				body: JSON.stringify({ id, editBoxName: newID }),
+				headers: { 'content-type': 'application/json' }
+			});
+			const responseData = await response.json();
+			if (response.ok && responseData?.newID === newID) {
+				id = newID;
+				await goto(`/box/${encodeURIComponent(newID)}`, { replaceState: true });
+				await cancelRenaming();
+			} else {
+				addToast(
+					'error',
+					'Could not rename box',
+					responseData.error || `The server returned ${response.status}.`
+				);
+			}
+		} catch {
+			addToast('error', 'Could not rename box', 'Check your connection and try again.');
+		} finally {
+			renaming = false;
+		}
+	}
 
-		const res = await fetch('/api/newBox', {
+	async function createBox() {
+		if (data.demoMode) {
+			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
+			return;
+		}
+		const response = await fetch('/api/newBox', {
 			method: 'POST',
 			body: JSON.stringify({ id }),
-			headers: {
-				'content-type': 'application/json'
-			}
+			headers: { 'content-type': 'application/json' }
 		});
-		if ((await res.json()) == `${id} box created`) {
-			invalidateAll();
-			initContents = '';
+		const responseData = await response.json();
+		if (response.ok && responseData.id === id) {
+			await invalidateAll();
+			initialContents = '';
 			contents = '';
-		}
-	};
-
-	const addToast = (type: toastType, title: string, subtitle: string) => {
-		toasts = [
-			...toasts,
-			{ type, title, subtitle, caption: new Date().toLocaleString(), timeout: 5000 }
-		];
-	};
-
-	// modal management
-	let cancelModalOpen = false;
-	let deleteModalOpen = false;
-	let editModalOpen = false;
-	let editBoxName = id;
-
-	function openCancelModal() {
-		if (initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) {
-			cancelModalOpen = true;
-			pushState('', {
-				cancelModal: true
-			});
 		} else {
-			if (browser) window.history.back();
+			addToast('error', 'Could not create box', responseData.error || 'Try again in a moment.');
 		}
 	}
-	function openDeleteModal() {
+
+	function exitBox() {
+		discardingChanges = true;
+		cancelModalOpen = false;
+		deleteModalOpen = false;
+		if (cameFromInventory) window.history.back();
+		else goto('/', { replaceState: true });
+	}
+
+	function openCancelDialog() {
+		if (!hasChanges) {
+			exitBox();
+			return;
+		}
+		cancelModalOpen = true;
+	}
+
+	function openDeleteDialog() {
 		deleteModalOpen = true;
-		pushState('', {
-			deleteModal: true
-		});
-	}
-	function openEditModal() {
-		editModalOpen = true;
-		pushState('', {
-			editModal: true
-		});
 	}
 
-	function closeModal() {
-		history.back();
+	async function startRenaming() {
+		editBoxName = id;
+		editingName = true;
+		await tick();
+		nameInput?.focus();
+		nameInput?.select();
 	}
 
-	//handle when modal changes state of modalShow
-	$: {
-		if (!cancelModalOpen && browser && $page.state?.cancelModal) {
-			closeModal();
-		}
-	}
-	$: {
-		if (!deleteModalOpen && browser && $page.state?.deleteModal) {
-			closeModal();
-		}
-	}
-	$: {
-		if (!editModalOpen && browser && $page.state?.editModal) {
-			closeModal();
-		}
-	}
-	//handles user browser back action
-	$: {
-		if (!$page.state?.cancelModal) {
-			cancelModalOpen = false;
-		}
-	}
-	$: {
-		if (!$page.state?.deleteModal) {
-			deleteModalOpen = false;
-		}
-	}
-	$: {
-		if (!$page.state?.editModal) {
-			editModalOpen = false;
+	async function cancelRenaming(restoreFocus = false) {
+		editingName = false;
+		editBoxName = id;
+		if (restoreFocus) {
+			await tick();
+			nameButton?.focus();
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Box: {data.box} | Box Find</title>
+	<title>{id} | Box Find</title>
 </svelte:head>
 
-<div class="wrapper">
+<main class="wrapper">
 	{#if data.boxExist}
-		<div class="header">
-			<h1>Box: {data.box}</h1>
-			<div class="boxEditButtons">
-				<Button kind="tertiary" iconDescription="Edit" icon={Edit} on:click={openEditModal} />
-				<Button
-					kind="danger-tertiary"
-					iconDescription="Delete"
-					icon={TrashCan}
-					on:click={openDeleteModal}
-				/>
+		<header class="header">
+			<div class="min-w-0 flex-1">
+				<h1 class="text-3xl font-semibold tracking-tight">
+					{#if editingName}
+						<input
+							id="edit-box-name"
+							bind:this={nameInput}
+							bind:value={editBoxName}
+							class="name-input -ml-1 h-11 w-full min-w-0 border-0 bg-transparent px-1 py-1 text-3xl font-semibold leading-9 tracking-tight"
+							aria-label="Box name"
+							aria-describedby="rename-instructions"
+							autocomplete="off"
+							readonly={renaming}
+							on:blur={renameBox}
+							on:keydown={(event) => {
+								if (event.isComposing) return;
+								if (event.key === 'Enter') {
+									event.preventDefault();
+									renameBox();
+								} else if (event.key === 'Escape' && !renaming) {
+									event.preventDefault();
+									cancelRenaming(true);
+								}
+							}}
+						/>
+						<span id="rename-instructions" class="sr-only"
+							>Press Enter or leave the field to save. Press Escape to cancel.</span
+						>
+					{:else}
+						<button
+							type="button"
+							class="group -ml-1 inline-flex min-h-11 max-w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							bind:this={nameButton}
+							aria-label="Rename box {id}"
+							on:click={startRenaming}
+						>
+							<span class="min-w-0 break-words">{id}</span>
+							<Pencil1
+								class="name-edit-icon h-5 w-5 shrink-0 text-muted-foreground transition-opacity group-hover:text-primary"
+								aria-hidden="true"
+							/>
+						</button>
+					{/if}
+				</h1>
 			</div>
-		</div>
-		<div class="editables">
-			<div class="textBox">
-				<TextArea
-					labelText="Box Contents"
-					placeholder="List box items separated by a new line..."
-					bind:value={contents}
-				/>
-			</div>
-
-			<div class="images">
-				<Button icon={Camera} on:click={() => fileinput.click()} style="margin-bottom: 1em"
-					>Add Photo</Button
+			<Tooltip.Root>
+				<Tooltip.Trigger asChild let:builder>
+					<Button
+						variant="outline"
+						size="icon"
+						builders={[builder]}
+						class="h-11 w-11 shrink-0 border-red-400/40 text-red-400 hover:bg-red-400/10 hover:text-red-300"
+						aria-label="Delete box"
+						on:click={openDeleteDialog}
+					>
+						<Trash class="h-5 w-5" aria-hidden="true" />
+					</Button>
+				</Tooltip.Trigger>
+				<Tooltip.Content
+					side="bottom"
+					sideOffset={8}
+					class="z-50 rounded-lg border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md"
 				>
-				<!-- hidden input -->
+					Delete box
+				</Tooltip.Content>
+			</Tooltip.Root>
+		</header>
+
+		<div class="editables">
+			<section class="text-box">
+				<Label for="box-contents" class="mb-3 flex h-8 items-center text-base font-semibold"
+					>Contents</Label
+				>
+				<Textarea
+					id="box-contents"
+					class="min-h-56 resize-y p-4 leading-6"
+					placeholder="List box items separated by a new line..."
+					rows={8}
+					bind:value={contents}
+					on:input={(event) => (contents = event.currentTarget.value)}
+				/>
+			</section>
+
+			<section class="images" aria-labelledby="photos-heading">
+				<div class="mb-3 flex h-11 items-center justify-between gap-3 md:h-8">
+					<h2 id="photos-heading" class="text-base font-semibold">
+						Photos <span class="ml-1 text-sm font-normal text-muted-foreground"
+							>({photos.length})</span
+						>
+					</h2>
+					<Button
+						variant="outline"
+						size="sm"
+						class="h-11 gap-2 md:h-8"
+						on:click={() => fileInput.click()}
+					>
+						<Camera class="h-5 w-5" />
+						Add Photo
+					</Button>
+				</div>
 				<input
 					type="file"
-					accept=".png, .jpeg, .webp, .gif, .tiff, .jpg"
+					accept=".png,.jpeg,.webp,.gif,.tiff,.jpg"
 					capture="environment"
-					on:change={(e) => onFileSelected(e)}
-					bind:this={fileinput}
-					style="display:none;"
+					on:change={selectPhoto}
+					bind:this={fileInput}
+					class="sr-only"
 				/>
-				<p></p>
-				<span class="imgWrapper">
-					<MasonryGrid {defaultDirection} {gap} {align} {column}>
-						{#each photos as photo, index}
-							<span class="imgStack">
-								<span class="btnWrapper" style="padding-top:1em; padding-right:1em;">
-									<Button
-										kind="danger-tertiary"
-										iconDescription="Delete"
-										icon={TrashCan}
-										on:click={() => {
-											splicePhoto(index);
-										}}
-									/>
-								</span>
 
-								<img src={photo} alt="img" />
-							</span>
-						{/each}
-					</MasonryGrid>
-				</span>
-			</div>
+				{#if photos.length === 0}
+					<div
+						class="flex min-h-40 flex-col items-center justify-center rounded-lg border border-dashed p-6 text-sm text-muted-foreground"
+					>
+						No photos yet
+						<button
+							type="button"
+							class="min-h-11 rounded-sm px-3 text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							on:click={() => fileInput.click()}
+						>
+							Add one
+						</button>
+					</div>
+				{/if}
+				<MasonryGrid defaultDirection="end" gap={16} align="start" column={0}>
+					{#each photos as photo, index}
+						<div class="photo-stack">
+							<img src={photo} alt="Contents of {id}" />
+							<Button
+								variant="destructive"
+								size="icon"
+								class="absolute right-3 top-3 h-10 w-10 bg-red-600 text-white hover:bg-red-500"
+								aria-label="Remove photo {index + 1}"
+								on:click={() => removePhoto(index)}
+							>
+								<Trash class="h-5 w-5" />
+							</Button>
+						</div>
+					{/each}
+				</MasonryGrid>
+			</section>
 		</div>
 
-		<div class="buttons" style="position: sticky; bottom: 1.5em">
-			<Button icon={Exit} kind="secondary" on:click={openCancelModal}>Exit</Button>
+		<div class="action-buttons">
+			<Button variant="outline" class="h-10 gap-2 px-5" on:click={openCancelDialog}>
+				<ArrowLeft class="h-5 w-5" />
+				Exit
+			</Button>
 			<Button
-				icon={Save}
+				type="button"
+				class="h-10 gap-2 px-4"
+				disabled={!hasChanges || saving}
 				on:click={save}
-				disabled={!(initContents != contents || newPhotos.length > 0 || delPhotos.length > 0) ||
-					saving}
 			>
 				{#if saving}
-					<InlineLoading description="Saving..." status="active" />
+					<Reload class="h-4 w-4 animate-spin" />
+					Saving…
 				{:else}
+					<Check class="h-5 w-5" />
 					Save
 				{/if}
 			</Button>
 		</div>
-
-		<Modal
-			danger
-			bind:open={deleteModalOpen}
-			modalHeading="Delete this box?"
-			primaryButtonText="Delete"
-			secondaryButtonText="Cancel"
-			on:click:button--secondary={() => (deleteModalOpen = false)}
-			on:click:button--primary={() => {
-				delBox();
-			}}
-		>
-			<p>All data associated with this box will be deleted. This can not be reversed</p>
-		</Modal>
-		<Modal
-			bind:open={editModalOpen}
-			modalHeading="New Box Name/ID"
-			primaryButtonText="Change Box Name"
-			secondaryButtonText="Cancel"
-			selectorPrimaryFocus="#box-name"
-			on:click:button--secondary={() => (editModalOpen = false)}
-			on:click:button--primary={() => {
-				renameBox();
-			}}
-		>
-			<p>Any unsaved changed will be discarded.</p>
-			<TextInput
-				id="box-name"
-				labelText="Box ID"
-				placeholder="Enter box ID..."
-				bind:value={editBoxName}
-			/>
-		</Modal>
-		<Modal
-			danger
-			bind:open={cancelModalOpen}
-			modalHeading="Exit without saving?"
-			primaryButtonText="Exit"
-			secondaryButtonText="Go Back"
-			on:click:button--secondary={() => (cancelModalOpen = false)}
-			on:click:button--primary={() => {
-				goto('/');
-			}}
-		>
-			<p>You have unsaved data</p>
-		</Modal>
-		<div class="toasts">
-			{#each toasts as toast}
-				<div class="toast" transition:fade>
-					<ToastNotification
-						kind={toast.type}
-						title={toast.title}
-						subtitle={toast.subtitle}
-						caption={toast.caption}
-						timeout={toast.timeout}
-						lowContrast
-					/>
-				</div>
-			{/each}
-		</div>
 	{:else}
-		<h1 style="padding-bottom:1em">The box "{id}" does not yet exist. Would you like it to?</h1>
-		<Button
-			icon={Home}
-			kind="secondary"
-			on:click={() => {
-				goto(`/`);
-			}}>Go Home</Button
-		>
-		<Button icon={Add} on:click={newBox}>Create Box</Button>
+		<h1 class="mb-6 text-3xl font-semibold tracking-tight">
+			The box “{id}” does not yet exist. Would you like it to?
+		</h1>
+		<div class="flex gap-2">
+			<Button variant="secondary" class="gap-2" on:click={() => goto('/')}>
+				<Home class="h-4 w-4" />
+				Go Home
+			</Button>
+			<Button class="gap-2" on:click={createBox}>
+				<Plus class="h-4 w-4" />
+				Create Box
+			</Button>
+		</div>
 	{/if}
-</div>
+</main>
+
+<Dialog.Root bind:open={deleteModalOpen}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Delete “{id}”?</Dialog.Title>
+			<Dialog.Description
+				>Its contents and photos will be permanently deleted. This cannot be undone.</Dialog.Description
+			>
+		</Dialog.Header>
+		<Dialog.Footer class="mt-3 gap-2 sm:gap-0">
+			<Dialog.Close class={buttonVariants({ variant: 'outline' })}>Cancel</Dialog.Close>
+			<Button variant="destructive" on:click={deleteBox}>Delete box</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root bind:open={cancelModalOpen}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Exit without saving?</Dialog.Title>
+			<Dialog.Description
+				>Your unsaved content and photo changes will be discarded.</Dialog.Description
+			>
+		</Dialog.Header>
+		<Dialog.Footer class="mt-3 gap-2 sm:gap-0">
+			<Dialog.Close class={buttonVariants({ variant: 'outline' })}>Keep editing</Dialog.Close>
+			<Button variant="destructive" on:click={exitBox}>Discard and exit</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<ToastStack bind:toasts />
 
 <style>
-	.wrapper {
-		margin: 1.5em;
+	@media (hover: hover) and (pointer: fine) {
+		.header :global(.name-edit-icon) {
+			opacity: 0;
+		}
+
+		.header button:hover :global(.name-edit-icon),
+		.header button:focus-visible :global(.name-edit-icon) {
+			opacity: 1;
+		}
 	}
+
+	.name-input:focus-visible {
+		outline: none;
+	}
+
+	.wrapper {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 2rem 1.5rem;
+	}
+
 	.header {
 		display: flex;
-		flex-direction: row;
+		align-items: center;
 		justify-content: space-between;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
 	}
-	.boxEditButtons {
-		flex: none;
-	}
-	.toasts {
-		position: fixed;
-		z-index: 1;
-		bottom: 15px;
-		right: 15px;
-	}
+
 	.editables {
-		display: flex;
-		justify-content: space-between;
-		flex-direction: row;
-	}
-	.editables > * {
-		flex: 1;
-	}
-	.images {
-		margin-top: 24px;
-		margin-left: 1em;
-	}
-	img {
-		/* min-width: 24em; */
-		/* max- */
-		width: 40em;
-	}
-	.imgStack {
 		display: grid;
-		width: fit-content;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: start;
+		gap: 2rem;
 	}
-	.imgStack > * {
-		grid-area: 1/1;
-		justify-self: end;
+
+	.text-box {
+		padding-top: 0;
 	}
-	@media (max-width: 1024px) {
+
+	.photo-stack {
+		position: relative;
+		width: 100%;
+	}
+
+	.photo-stack img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: var(--radius);
+	}
+
+	.action-buttons {
+		position: sticky;
+		bottom: 0;
+		display: flex;
+		gap: 0.75rem;
+		margin-top: 2rem;
+		padding: 1.25rem 0;
+		border-top: 1px solid hsl(var(--border));
+		background: hsl(var(--background));
+		z-index: 10;
+	}
+
+	.wrapper :global(svg path) {
+		stroke: currentColor;
+		stroke-width: 0.3;
+	}
+
+	@media (max-width: 768px) {
 		.wrapper {
-			margin: 1em;
+			padding: 1.5rem 1rem;
 		}
+
+		.header {
+			align-items: center;
+			gap: 1rem;
+			margin-bottom: 1.5rem;
+		}
+
 		.editables {
-			flex-direction: column;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 1.5rem;
 		}
-		.images {
-			margin-left: 0;
-		}
-		img {
-			max-width: 92vw;
+
+		.text-box {
+			padding-top: 0;
 		}
 	}
 </style>

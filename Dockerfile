@@ -2,7 +2,7 @@ FROM oven/bun:1-slim AS base
 WORKDIR /app
 
 FROM base AS install
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 FROM base AS builder
@@ -11,7 +11,7 @@ COPY . .
 RUN bun run build
 
 FROM base AS pruner
-COPY package.json bun.lockb* ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1-slim AS release
