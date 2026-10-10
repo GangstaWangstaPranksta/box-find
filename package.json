@@ -22,7 +22,7 @@
 		"fuzzbunny": "^1.0.1",
 		"mongodb": "^6.9.0",
 		"mongoose": "^8.9.5",
-		"sharp": "^0.33.5",
+		"sharp": "^0.35.5",
 		"svelte": "^5.56.5",
 		"svelte-adapter-bun": "^1.0.1"
 	},
@@ -32,7 +32,7 @@
 		"autoprefixer": "10",
 		"bits-ui": "0.22.0",
 		"clsx": "^2.1.1",
-		"oxfmt": "^0.59.0",
+		"oxfmt": "^0.72.0",
 		"oxlint": "^1.74.0",
 		"postcss": "8",
 		"svelte-check": "^4.7.3",
@@ -44,7 +44,7 @@
 		"vite": "^8.1.5"
 	},
 	"optionalDependencies": {
-		"@img/sharp-linux-x64": "^0.34.5",
+		"@img/sharp-linux-x64": "^0.35.5",
 		"@rollup/rollup-linux-x64-gnu": "^4.59.0"
 	}
 }
