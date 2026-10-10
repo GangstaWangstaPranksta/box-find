@@ -2,6 +2,7 @@
 import { describe, expect, test } from 'bun:test';
 import { saveBoxChanges } from '../src/lib/save-workflow.ts';
 
+const savedImage = '/api/photos/' + 'a'.repeat(64) + '.jpg';
 const jsonResponse = (body, status = 200) =>
 	new Response(JSON.stringify(body), {
 		status,
@@ -13,7 +14,7 @@ describe('saveBoxChanges', () => {
 		const requests = [];
 		const fetch = async (endpoint, options) => {
 			requests.push([endpoint, JSON.parse(options.body)]);
-			return jsonResponse({ status: 'ok' });
+			return jsonResponse({ status: 'ok', image: savedImage });
 		};
 
 		const result = await saveBoxChanges({
@@ -77,7 +78,7 @@ describe('saveBoxChanges', () => {
 			if (endpoint === '/api/delImage' && base64 === 'bad-delete') {
 				return new Response('storage unavailable', { status: 503 });
 			}
-			return jsonResponse({ status: 'ok' });
+			return jsonResponse({ status: 'ok', image: savedImage });
 		};
 
 		const result = await saveBoxChanges({
@@ -109,7 +110,7 @@ describe('saveBoxChanges', () => {
 			delPhotos: [],
 			fetch: async () => {
 				requestCount += 1;
-				return jsonResponse({ status: 'ok' });
+				return jsonResponse({ status: 'ok', image: savedImage });
 			}
 		});
 
@@ -147,4 +148,40 @@ describe('saveBoxChanges', () => {
 			'submitted text'
 		);
 	});
+});
+
+test('returns canonical photos for immediate deletion and uploads sequentially', async () => {
+	let active = 0;
+	let maximum = 0;
+	const result = await saveBoxChanges({
+		id: 'garage',
+		contents: '',
+		contentsChanged: false,
+		newPhotos: ['one', 'two', 'three'],
+		delPhotos: [],
+		fetch: async () => {
+			active++;
+			maximum = Math.max(maximum, active);
+			await new Promise((resolve) => setTimeout(resolve, 1));
+			active--;
+			return jsonResponse({ status: 'ok', image: savedImage });
+		}
+	});
+	expect(maximum).toBe(1);
+	expect(result.uploadedPhotos).toEqual(
+		['one', 'two', 'three'].map((original) => ({ original, image: savedImage }))
+	);
+});
+
+test('keeps uploads retryable when the server omits canonical identity', async () => {
+	const result = await saveBoxChanges({
+		id: 'garage',
+		contents: '',
+		contentsChanged: false,
+		newPhotos: ['one'],
+		delPhotos: [],
+		fetch: async () => jsonResponse({ status: 'ok' })
+	});
+	expect(result.outcome).toBe('failure');
+	expect(result.remainingUploads).toEqual(['one']);
 });

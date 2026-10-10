@@ -13,6 +13,7 @@ export type SaveWorkflowResult = {
 	remainingUploads: string[];
 	remainingDeletions: string[];
 	failures: SaveFailure[];
+	uploadedPhotos: { original: string; image: string }[];
 };
 
 type SaveWorkflowInput = {
@@ -24,7 +25,7 @@ type SaveWorkflowInput = {
 	fetch?: typeof globalThis.fetch;
 };
 
-type MutationResult = { ok: true } | { ok: false; message: string };
+type MutationResult = { ok: true; image?: string } | { ok: false; message: string };
 
 const responseError = async (response: Response) => {
 	let detail = '';
@@ -55,7 +56,18 @@ const mutate = async (
 			headers: { 'content-type': 'application/json' }
 		});
 
-		return response.ok ? { ok: true } : { ok: false, message: await responseError(response) };
+		if (!response.ok) return { ok: false, message: await responseError(response) };
+		if (endpoint === '/api/saveImage') {
+			const body = await response.json();
+			if (
+				typeof body.image !== 'string' ||
+				!/^\/api\/photos\/[a-f0-9]{64}\.jpg$/.test(body.image)
+			) {
+				return { ok: false, message: 'Server did not return the saved photo. Try again.' };
+			}
+			return { ok: true, image: body.image };
+		}
+		return { ok: true };
 	} catch (error) {
 		return {
 			ok: false,
@@ -78,16 +90,20 @@ export const saveBoxChanges = async ({
 	const contentRequest = contentsChanged
 		? mutate(fetchImpl, '/api/saveContent', { id, contents })
 		: undefined;
-	const uploadRequests = newPhotos.map((base64) =>
-		mutate(fetchImpl, '/api/saveImage', { id, base64 })
-	);
+	// Sequential uploads keep normal multi-photo saves within server processing capacity.
+	const uploadRequests = (async () => {
+		const results: MutationResult[] = [];
+		for (const base64 of newPhotos)
+			results.push(await mutate(fetchImpl, '/api/saveImage', { id, base64 }));
+		return results;
+	})();
 	const deletionRequests = delPhotos.map((base64) =>
 		mutate(fetchImpl, '/api/delImage', { id, base64 })
 	);
 
 	const [contentResult, uploadResults, deletionResults] = await Promise.all([
 		contentRequest,
-		Promise.all(uploadRequests),
+		uploadRequests,
 		Promise.all(deletionRequests)
 	]);
 	const failures: SaveFailure[] = [];
@@ -120,6 +136,9 @@ export const saveBoxChanges = async ({
 		contentsSaved: contentResult?.ok === true,
 		remainingUploads: newPhotos.filter((_, index) => !uploadResults[index]?.ok),
 		remainingDeletions: delPhotos.filter((_, index) => !deletionResults[index]?.ok),
-		failures
+		failures,
+		uploadedPhotos: uploadResults.flatMap((result, index) =>
+			result.ok && result.image ? [{ original: newPhotos[index], image: result.image }] : []
+		)
 	};
 };
