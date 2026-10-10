@@ -117,4 +117,34 @@ describe('saveBoxChanges', () => {
 		expect(result.attempted).toBe(0);
 		expect(requestCount).toBe(0);
 	});
+	test('keeps delayed save results tied to the submitted queues', async () => {
+		let complete;
+		const delayedResponse = new Promise((resolve) => {
+			complete = resolve;
+		});
+		const newPhotos = ['submitted-upload'];
+		const delPhotos = ['submitted-delete'];
+		const requests = [];
+		const save = saveBoxChanges({
+			id: 'garage',
+			contents: 'submitted text',
+			contentsChanged: true,
+			newPhotos,
+			delPhotos,
+			fetch: async (endpoint, options) => {
+				requests.push([endpoint, JSON.parse(options.body)]);
+				await delayedResponse;
+				return jsonResponse({ error: 'offline' }, 503);
+			}
+		});
+		newPhotos.splice(0, 1, 'later-upload');
+		delPhotos.push('later-delete');
+		complete();
+		const result = await save;
+		expect(result.remainingUploads).toEqual(['submitted-upload']);
+		expect(result.remainingDeletions).toEqual(['submitted-delete']);
+		expect(requests.find(([endpoint]) => endpoint === '/api/saveContent')[1].contents).toBe(
+			'submitted text'
+		);
+	});
 });

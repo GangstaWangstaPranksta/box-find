@@ -72,6 +72,9 @@ export const saveBoxChanges = async ({
 	delPhotos,
 	fetch: fetchImpl = globalThis.fetch
 }: SaveWorkflowInput): Promise<SaveWorkflowResult> => {
+	// Keep the result tied to the submitted operations, even if callers mutate their queues.
+	newPhotos = [...newPhotos];
+	delPhotos = [...delPhotos];
 	const contentRequest = contentsChanged
 		? mutate(fetchImpl, '/api/saveContent', { id, contents })
 		: undefined;

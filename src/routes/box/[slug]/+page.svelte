@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate, beforeNavigate, goto, invalidateAll } from '$app/navigation';
 	import { Tooltip } from 'bits-ui';
-	import { tick } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import { page } from '$app/stores';
 	import ArrowLeft from 'svelte-radix/ArrowLeft.svelte';
 	import Camera from 'svelte-radix/Camera.svelte';
@@ -19,6 +19,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 	import { saveBoxChanges } from '$lib/save-workflow';
+	import { navigationProtection } from '$lib/editor-protection';
 	import type { toastData, toastType } from '$lib/types/types';
 	import type { PageData } from './$types';
 
@@ -41,28 +42,74 @@
 	let cameFromInventory = false;
 	let discardingChanges = false;
 
+	let deleting = false;
+	let photoReaders: FileReader[] = [];
+	let pendingExit: { delta: number } | { url: string } | null = null;
+	let completingRename = false;
+
 	beforeNavigate((navigation) => {
-		if (navigation.type === 'popstate' && (cancelModalOpen || deleteModalOpen)) {
-			navigation.cancel();
-			cancelModalOpen = false;
-			deleteModalOpen = false;
+		const protection = navigationProtection({
+			busy: saving || renaming || deleting,
+			dirty: hasChanges || hasNameChanges,
+			readingPhotos: photoReaders.length > 0,
+			discarding: discardingChanges || completingRename,
+			willUnload: navigation.willUnload,
+			popstate: navigation.type === 'popstate',
+			dialogOpen: cancelModalOpen || deleteModalOpen
+		});
+		if (protection === 'allow') return;
+		navigation.cancel();
+		// SvelteKit uses cancellation during unload for the browser's native confirmation.
+		if (navigation.willUnload) return;
+		if (protection === 'busy') {
+			addToast('warning', 'Please wait', 'Wait for the current changes to finish saving.');
 			return;
 		}
-		if (hasChanges && !discardingChanges && navigation.type === 'popstate') {
-			navigation.cancel();
-			cancelModalOpen = true;
+		if (protection === 'close-dialog') {
+			cancelModalOpen = false;
+			deleteModalOpen = false;
+			pendingExit = null;
+			return;
 		}
+		pendingExit =
+			navigation.type === 'popstate'
+				? { delta: navigation.delta }
+				: navigation.to
+					? { url: navigation.to.url.href }
+					: null;
+		cancelModalOpen = true;
 	});
 
+	onDestroy(() => photoReaders.forEach((reader) => reader.abort()));
+
 	afterNavigate(({ from }) => {
+		const nextId = data.box ?? $page.params.slug ?? '';
+		if (nextId !== id) {
+			// SvelteKit reuses this component when navigating between box slugs.
+			photoReaders.forEach((reader) => reader.abort());
+			photoReaders = [];
+			id = nextId;
+			contents = initialContents = data.contents;
+			photos = data.images;
+			newPhotos = [];
+			deletedPhotos = [];
+			editingName = false;
+			editBoxName = id;
+			cameFromInventory = false;
+		}
+		discardingChanges = false;
+		pendingExit = null;
 		if (from?.route.id === '/' || from?.route.id === '/page/[slug]') {
 			cameFromInventory = true;
 		}
 	});
+
 	let nameInput: HTMLInputElement;
 	let nameButton: HTMLButtonElement;
 	let editBoxName: string = id;
 
+	$: busy = saving || renaming || deleting;
+	$: hasNameChanges = editingName && editBoxName.trim() !== id;
 	$: hasChanges = initialContents !== contents || newPhotos.length > 0 || deletedPhotos.length > 0;
 
 	function addToast(type: toastType, title: string, subtitle: string) {
@@ -70,21 +117,30 @@
 	}
 
 	function selectPhoto(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+		if (busy) return;
 		const image = event.currentTarget.files?.[0];
 		if (!image) return;
 
 		const reader = new FileReader();
-		reader.readAsDataURL(image);
-		reader.onload = (loadEvent) => {
-			const photo = loadEvent.target?.result;
+		photoReaders = [...photoReaders, reader];
+		reader.addEventListener('error', () =>
+			addToast('error', 'Could not read photo', 'Try selecting the photo again.')
+		);
+		reader.addEventListener('loadend', () => {
+			photoReaders = photoReaders.filter((pending) => pending !== reader);
+			if (fileInput) fileInput.value = '';
+		});
+		reader.addEventListener('load', () => {
+			const photo = reader.result;
 			if (typeof photo !== 'string') return;
 			photos = [...photos, photo];
 			newPhotos = [...newPhotos, photo];
-			fileInput.value = '';
-		};
+		});
+		reader.readAsDataURL(image);
 	}
 
 	function removePhoto(index: number) {
+		if (busy) return;
 		const photo = photos[index];
 		if (newPhotos.includes(photo)) {
 			newPhotos = newPhotos.filter((candidate) => candidate !== photo);
@@ -95,23 +151,24 @@
 	}
 
 	async function save() {
-		if (!hasChanges || saving) return;
+		if (!hasChanges || busy || photoReaders.length > 0) return;
 		if (data.demoMode) {
 			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
 			return;
 		}
 
+		const submittedContents = contents;
 		saving = true;
 		try {
 			const result = await saveBoxChanges({
 				id,
-				contents,
+				contents: submittedContents,
 				contentsChanged: initialContents !== contents,
-				newPhotos,
-				delPhotos: deletedPhotos
+				newPhotos: [...newPhotos],
+				delPhotos: [...deletedPhotos]
 			});
 
-			if (result.contentsSaved) initialContents = contents;
+			if (result.contentsSaved) initialContents = submittedContents;
 			newPhotos = result.remainingUploads;
 			deletedPhotos = result.remainingDeletions;
 
@@ -136,32 +193,41 @@
 	}
 
 	async function deleteBox() {
+		if (busy) return;
 		if (data.demoMode) {
 			deleteModalOpen = false;
 			addToast('error', 'Demo mode', 'Edits are restricted in demo mode.');
 			return;
 		}
 
-		const response = await fetch('/api/deleteBox', {
-			method: 'DELETE',
-			body: JSON.stringify({ id }),
-			headers: { 'content-type': 'application/json' }
-		});
-		const responseData = await response.json();
-		if (response.ok && responseData.status === 'ok') {
-			await goto('/');
-		} else if (response.status === 404) {
-			deleteModalOpen = false;
-			addToast('error', 'Box not found', `Box “${id}” was not found.`);
-		} else {
-			deleteModalOpen = false;
-			addToast('error', 'Could not delete box', responseData.error || 'Try again in a moment.');
+		deleting = true;
+		try {
+			const response = await fetch('/api/deleteBox', {
+				method: 'DELETE',
+				body: JSON.stringify({ id }),
+				headers: { 'content-type': 'application/json' }
+			});
+			const responseData = await response.json();
+			if (response.ok && responseData.status === 'ok') {
+				discardingChanges = true;
+				await goto('/');
+			} else if (response.status === 404) {
+				deleteModalOpen = false;
+				addToast('error', 'Box not found', `Box “${id}” was not found.`);
+			} else {
+				deleteModalOpen = false;
+				addToast('error', 'Could not delete box', responseData.error || 'Try again in a moment.');
+			}
+		} catch {
+			addToast('error', 'Could not delete box', 'Check your connection and try again.');
+		} finally {
+			deleting = false;
 		}
 	}
 
 	async function renameBox() {
-		if (!editingName || renaming) return;
-		if (hasChanges) {
+		if (!editingName || busy || cancelModalOpen || deleteModalOpen) return;
+		if (hasChanges || photoReaders.length > 0) {
 			addToast(
 				'warning',
 				'Save changes first',
@@ -189,6 +255,7 @@
 			const responseData = await response.json();
 			if (response.ok && responseData?.newID === newID) {
 				id = newID;
+				completingRename = true;
 				await goto(`/box/${encodeURIComponent(newID)}`, { replaceState: true });
 				await cancelRenaming();
 			} else {
@@ -202,6 +269,7 @@
 			addToast('error', 'Could not rename box', 'Check your connection and try again.');
 		} finally {
 			renaming = false;
+			completingRename = false;
 		}
 	}
 
@@ -226,15 +294,20 @@
 	}
 
 	function exitBox() {
+		if (busy) return;
 		discardingChanges = true;
 		cancelModalOpen = false;
 		deleteModalOpen = false;
-		if (cameFromInventory) window.history.back();
+		if (pendingExit && 'delta' in pendingExit) window.history.go(pendingExit.delta);
+		else if (pendingExit && 'url' in pendingExit) goto(pendingExit.url);
+		else if (cameFromInventory) window.history.back();
 		else goto('/', { replaceState: true });
 	}
 
 	function openCancelDialog() {
-		if (!hasChanges) {
+		if (busy) return;
+		pendingExit = null;
+		if (!hasChanges && !hasNameChanges && photoReaders.length === 0) {
 			exitBox();
 			return;
 		}
@@ -242,10 +315,12 @@
 	}
 
 	function openDeleteDialog() {
+		if (busy) return;
 		deleteModalOpen = true;
 	}
 
 	async function startRenaming() {
+		if (busy) return;
 		editBoxName = id;
 		editingName = true;
 		await tick();
@@ -281,14 +356,14 @@
 							aria-label="Box name"
 							aria-describedby="rename-instructions"
 							autocomplete="off"
-							readonly={renaming}
+							readonly={busy}
 							on:blur={renameBox}
 							on:keydown={(event) => {
 								if (event.isComposing) return;
 								if (event.key === 'Enter') {
 									event.preventDefault();
 									renameBox();
-								} else if (event.key === 'Escape' && !renaming) {
+								} else if (event.key === 'Escape' && !busy) {
 									event.preventDefault();
 									cancelRenaming(true);
 								}
@@ -303,6 +378,7 @@
 							class="group -ml-1 inline-flex min-h-11 max-w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							bind:this={nameButton}
 							aria-label="Rename box {id}"
+							disabled={busy}
 							on:click={startRenaming}
 						>
 							<span class="min-w-0 break-words">{id}</span>
@@ -322,6 +398,7 @@
 						builders={[builder]}
 						class="h-11 w-11 shrink-0 border-red-400/40 text-red-400 hover:bg-red-400/10 hover:text-red-300"
 						aria-label="Delete box"
+						disabled={busy}
 						on:click={openDeleteDialog}
 					>
 						<Trash class="h-5 w-5" aria-hidden="true" />
@@ -347,6 +424,7 @@
 					class="min-h-56 resize-y p-4 leading-6"
 					placeholder="List box items separated by a new line..."
 					rows={8}
+					readonly={busy}
 					bind:value={contents}
 					on:input={(event) => (contents = event.currentTarget.value)}
 				/>
@@ -363,6 +441,7 @@
 						variant="outline"
 						size="sm"
 						class="h-11 gap-2 md:h-8"
+						disabled={busy || photoReaders.length > 0}
 						on:click={() => fileInput.click()}
 					>
 						<Camera class="h-5 w-5" />
@@ -371,6 +450,7 @@
 				</div>
 				<input
 					type="file"
+					disabled={busy || photoReaders.length > 0}
 					accept=".png,.jpeg,.webp,.gif,.tiff,.jpg"
 					capture="environment"
 					on:change={selectPhoto}
@@ -386,6 +466,7 @@
 						<button
 							type="button"
 							class="min-h-11 rounded-sm px-3 text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							disabled={busy || photoReaders.length > 0}
 							on:click={() => fileInput.click()}
 						>
 							Add one
@@ -401,6 +482,7 @@
 								size="icon"
 								class="absolute right-3 top-3 h-10 w-10 bg-red-600 text-white hover:bg-red-500"
 								aria-label="Remove photo {index + 1}"
+								disabled={busy}
 								on:click={() => removePhoto(index)}
 							>
 								<Trash class="h-5 w-5" />
@@ -412,14 +494,14 @@
 		</div>
 
 		<div class="action-buttons">
-			<Button variant="outline" class="h-10 gap-2 px-5" on:click={openCancelDialog}>
+			<Button variant="outline" class="h-10 gap-2 px-5" disabled={busy} on:click={openCancelDialog}>
 				<ArrowLeft class="h-5 w-5" />
 				Exit
 			</Button>
 			<Button
 				type="button"
 				class="h-10 gap-2 px-4"
-				disabled={!hasChanges || saving}
+				disabled={!hasChanges || busy || photoReaders.length > 0}
 				on:click={save}
 			>
 				{#if saving}
@@ -458,7 +540,7 @@
 		</Dialog.Header>
 		<Dialog.Footer class="mt-3 gap-2 sm:gap-0">
 			<Dialog.Close class={buttonVariants({ variant: 'outline' })}>Cancel</Dialog.Close>
-			<Button variant="destructive" on:click={deleteBox}>Delete box</Button>
+			<Button variant="destructive" disabled={busy} on:click={deleteBox}>Delete box</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
@@ -468,12 +550,12 @@
 		<Dialog.Header>
 			<Dialog.Title>Exit without saving?</Dialog.Title>
 			<Dialog.Description
-				>Your unsaved content and photo changes will be discarded.</Dialog.Description
+				>Your unsaved name, content, and photo changes will be discarded.</Dialog.Description
 			>
 		</Dialog.Header>
 		<Dialog.Footer class="mt-3 gap-2 sm:gap-0">
 			<Dialog.Close class={buttonVariants({ variant: 'outline' })}>Keep editing</Dialog.Close>
-			<Button variant="destructive" on:click={exitBox}>Discard and exit</Button>
+			<Button variant="destructive" disabled={busy} on:click={exitBox}>Discard and exit</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
