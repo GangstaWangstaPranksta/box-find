@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	/* Desaturated Slate surfaces with a soft teal accent. */
+	:root {
+		--background: 220 12% 8%;
+		--foreground: 210 12% 94%;
+		--muted: 220 10% 16%;
+		--muted-foreground: 215 10% 65%;
+		--popover: 220 12% 10%;
+		--popover-foreground: 210 12% 94%;
+		--card: 220 12% 10%;
+		--card-foreground: 210 12% 94%;
+		--border: 220 10% 22%;
+		--input: 220 10% 24%;
+		--primary: 170 38% 64%;
+		--primary-foreground: 175 30% 9%;
+		--secondary: 220 10% 18%;
+		--secondary-foreground: 210 12% 94%;
+		--accent: 172 20% 17%;
+		--accent-foreground: 165 25% 88%;
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 0% 98%;
+		--ring: 170 38% 64%;
+		--radius: 0.5rem;
+	}
+
+	* {
+		@apply border-border;
+	}
+
+	html {
+		color-scheme: dark;
+		background: hsl(var(--background));
+	}
+
+	body {
+		@apply bg-background font-sans text-foreground antialiased;
+		min-width: 320px;
+		min-height: 100vh;
+	}
+
+	::selection {
+		background: hsl(var(--primary) / 0.35);
+		color: hsl(var(--foreground));
+	}
+
+	:focus-visible {
+		outline: 2px solid hsl(var(--ring));
+		outline-offset: 2px;
+	}
+
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-thumb {
+		border: 2px solid transparent;
+		border-radius: 999px;
+		background: hsl(var(--muted-foreground) / 0.45);
+		background-clip: padding-box;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: hsl(var(--muted-foreground) / 0.68);
+		background-clip: padding-box;
+	}
+
+	::-webkit-scrollbar-track,
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+	}
+}

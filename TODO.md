@@ -16,3 +16,8 @@
 ## Tooling
 
 - [x] Replace Prettier with Oxlint and Oxfmt for linting and formatting.
+
+## Roadmap
+
+- [x] Migrate from IBM Carbon components to shadcn/ui.
+- [ ] Add MinIO support instead of base64 image string encoding.
