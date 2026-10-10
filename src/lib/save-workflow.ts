@@ -97,14 +97,26 @@ export const saveBoxChanges = async ({
 			results.push(await mutate(fetchImpl, '/api/saveImage', { id, base64 }));
 		return results;
 	})();
-	const deletionRequests = delPhotos.map((base64) =>
-		mutate(fetchImpl, '/api/delImage', { id, base64 })
-	);
+	// Re-adding a photo wins over its queued removal. Wait for canonical upload IDs
+	// before deleting, and clear superseded deletions so retries cannot remove it later.
+	const deletionRequests = (async () => {
+		const uploads = await uploadRequests;
+		const retained = new Set(
+			uploads.flatMap((result) => (result.ok && result.image ? [result.image] : []))
+		);
+		return Promise.all(
+			delPhotos.map((base64): Promise<MutationResult> =>
+				retained.has(base64)
+					? Promise.resolve({ ok: true })
+					: mutate(fetchImpl, '/api/delImage', { id, base64 })
+			)
+		);
+	})();
 
 	const [contentResult, uploadResults, deletionResults] = await Promise.all([
 		contentRequest,
 		uploadRequests,
-		Promise.all(deletionRequests)
+		deletionRequests
 	]);
 	const failures: SaveFailure[] = [];
 
